@@ -1,9 +1,14 @@
 import { Activity } from './model';
-import { ActivityLogParams } from './types';
+import { ActivityLogParams, LoggerOptions } from './types';
 import { activityContext } from './context';
 import { activityEvents } from './events';
 
-export async function logActivity(params: ActivityLogParams): Promise<void> {
+export async function logActivity(
+  params: ActivityLogParams,
+  options: LoggerOptions = {}
+): Promise<void> {
+  const { throwOnError = false } = options;
+
   try {
     // Get context if available
     const context = activityContext.get();
@@ -38,6 +43,13 @@ export async function logActivity(params: ActivityLogParams): Promise<void> {
       activityData.meta = meta;
     }
 
+    // Warn if no userId will be set
+    if (!activityData.userId) {
+      console.warn(
+        '[mongoose-activity] No userId provided, activity may not be linked to a user'
+      );
+    }
+
     // Emit before-log event (allows cancellation)
     let shouldCancel = false;
     const listeners = activityEvents.listeners('activity:before-log');
@@ -58,9 +70,14 @@ export async function logActivity(params: ActivityLogParams): Promise<void> {
     // Emit logged event for real-time integrations
     activityEvents.emit('activity:logged', activity.toObject());
   } catch (error) {
+    // Always emit error event and log with prefix
     activityEvents.emit('activity:error', error as Error, params);
-    console.error('Failed to log activity:', error);
-    throw error;
+    console.warn('[mongoose-activity] Failed to log activity:', error);
+
+    // Optionally throw error if configured to do so
+    if (throwOnError) {
+      throw error;
+    }
   }
 }
 

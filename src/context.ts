@@ -35,6 +35,17 @@ class ActivityContextManager {
   getRequestId(): string | undefined {
     return this.get()?.requestId;
   }
+
+  clear(): void {
+    const context = this.get();
+    if (context) {
+      Object.keys(context).forEach((key) => delete context[key]);
+    }
+  }
+
+  isEnded(): boolean {
+    return this.get()?.ended === true;
+  }
 }
 
 export const activityContext = new ActivityContextManager();

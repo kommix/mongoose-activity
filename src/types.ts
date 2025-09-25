@@ -25,4 +25,10 @@ export interface PluginOptions {
   trackedFields?: string[];
   activityType?: string;
   collectionName?: string;
+  throwOnError?: boolean;
+  indexes?: boolean;
+}
+
+export interface LoggerOptions {
+  throwOnError?: boolean;
 }

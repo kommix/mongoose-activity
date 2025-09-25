@@ -1,5 +1,6 @@
 import { Schema, model, Model } from 'mongoose';
 import { IActivity } from './types';
+import { activityConfig } from './config';
 
 const ActivitySchema = new Schema<IActivity>(
   {
@@ -34,19 +35,21 @@ const ActivitySchema = new Schema<IActivity>(
     },
   },
   {
-    collection: 'activities',
+    collection: activityConfig.getCollectionName(),
     timestamps: false,
   }
 );
 
-// Compound indexes for efficient querying
-ActivitySchema.index({ userId: 1, createdAt: -1 });
-ActivitySchema.index({ 'entity.id': 1, createdAt: -1 });
-ActivitySchema.index({ 'entity.type': 1, createdAt: -1 });
-ActivitySchema.index({ type: 1, createdAt: -1 });
+// Compound indexes for efficient querying (configurable)
+if (activityConfig.getIndexes()) {
+  ActivitySchema.index({ userId: 1, createdAt: -1 });
+  ActivitySchema.index({ 'entity.id': 1, createdAt: -1 });
+  ActivitySchema.index({ 'entity.type': 1, createdAt: -1 });
+  ActivitySchema.index({ type: 1, createdAt: -1 });
 
-// Compound index for entity queries
-ActivitySchema.index({ 'entity.type': 1, 'entity.id': 1, createdAt: -1 });
+  // Compound index for entity queries
+  ActivitySchema.index({ 'entity.type': 1, 'entity.id': 1, createdAt: -1 });
+}
 
 export const Activity: Model<IActivity> = model<IActivity>(
   'Activity',

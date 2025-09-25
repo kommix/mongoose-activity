@@ -2,6 +2,7 @@ import { Schema, Document, Types } from 'mongoose';
 import { PluginOptions } from './types';
 import { logActivity } from './logger';
 import { activityContext } from './context';
+import { activityConfig } from './config';
 
 export function activityPlugin<T extends Document>(
   schema: Schema<T>,
@@ -11,6 +12,7 @@ export function activityPlugin<T extends Document>(
     trackedFields = [],
     activityType = 'document_updated',
     collectionName = schema.get('collection') || 'unknown',
+    throwOnError = activityConfig.getThrowOnError(),
   } = options;
 
   // Store original document state after loading from DB
@@ -68,24 +70,27 @@ export function activityPlugin<T extends Document>(
         }
 
         if (doc.userId) {
-          await logActivity({
-            userId: doc.userId,
-            entity: {
-              type: collectionName,
-              id: doc._id as Types.ObjectId,
+          await logActivity(
+            {
+              userId: doc.userId,
+              entity: {
+                type: collectionName,
+                id: doc._id as Types.ObjectId,
+              },
+              type: `${collectionName}_created`,
+              meta:
+                trackedFields.length > 0
+                  ? trackedFields.reduce(
+                      (acc, field) => {
+                        acc[field] = doc.get(field);
+                        return acc;
+                      },
+                      {} as Record<string, any>
+                    )
+                  : undefined,
             },
-            type: `${collectionName}_created`,
-            meta:
-              trackedFields.length > 0
-                ? trackedFields.reduce(
-                    (acc, field) => {
-                      acc[field] = doc.get(field);
-                      return acc;
-                    },
-                    {} as Record<string, any>
-                  )
-                : undefined,
-          });
+            { throwOnError }
+          );
         }
       } else {
         // Document updated
@@ -100,22 +105,25 @@ export function activityPlugin<T extends Document>(
             };
           });
 
-          await logActivity({
-            userId: doc.userId,
-            entity: {
-              type: collectionName,
-              id: doc._id as Types.ObjectId,
+          await logActivity(
+            {
+              userId: doc.userId,
+              entity: {
+                type: collectionName,
+                id: doc._id as Types.ObjectId,
+              },
+              type: activityType,
+              meta: {
+                changes,
+                modifiedFields,
+              },
             },
-            type: activityType,
-            meta: {
-              changes,
-              modifiedFields,
-            },
-          });
+            { throwOnError }
+          );
         }
       }
     } catch (error) {
-      console.error('Error logging activity:', error);
+      console.warn('[mongoose-activity] Error logging activity:', error);
     }
   });
 
@@ -150,23 +158,29 @@ export function activityPlugin<T extends Document>(
               activityContext.getUserId();
 
             if (userId) {
-              await logActivity({
-                userId: userId as Types.ObjectId,
-                entity: {
-                  type: collectionName,
-                  id: filter._id as Types.ObjectId,
+              await logActivity(
+                {
+                  userId: userId as Types.ObjectId,
+                  entity: {
+                    type: collectionName,
+                    id: filter._id as Types.ObjectId,
+                  },
+                  type: activityType,
+                  meta: {
+                    updatedFields,
+                    updateOperation: (this as any).op,
+                  },
                 },
-                type: activityType,
-                meta: {
-                  updatedFields,
-                  updateOperation: (this as any).op,
-                },
-              });
+                { throwOnError }
+              );
             }
           }
         }
       } catch (error) {
-        console.error('Error logging activity in update operation:', error);
+        console.warn(
+          '[mongoose-activity] Error logging activity in update operation:',
+          error
+        );
       }
     }
   );
