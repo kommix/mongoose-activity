@@ -1,6 +1,7 @@
 import { Schema, Document, Types } from 'mongoose';
 import { PluginOptions } from './types';
 import { logActivity } from './logger';
+import { activityContext } from './context';
 
 export function activityPlugin<T extends Document>(schema: Schema<T>, options: PluginOptions = {}) {
   const {
@@ -9,8 +10,21 @@ export function activityPlugin<T extends Document>(schema: Schema<T>, options: P
     collectionName = schema.get('collection') || 'unknown'
   } = options;
 
-  // Store original values for comparison
+  // Store original document state after loading from DB
+  schema.post('init', function() {
+    if (trackedFields.length > 0) {
+      (this as any).__initialState = {};
+      trackedFields.forEach(field => {
+        (this as any).__initialState[field] = this.get(field);
+      });
+    }
+  });
+
+  // Store original values for comparison and track if document is new
   schema.pre('save', function(next) {
+    // Store whether this is a new document
+    (this as any).__wasNew = this.isNew;
+
     if (this.isNew) {
       next();
       return;
@@ -26,9 +40,11 @@ export function activityPlugin<T extends Document>(schema: Schema<T>, options: P
         (this as any).__modifiedTrackedFields = modifiedTrackedFields;
         (this as any).__originalValues = {};
 
-        // Store original values
+        // Store the original values from initial state
         modifiedTrackedFields.forEach(field => {
-          (this as any).__originalValues[field] = this.get(field);
+          // Use the value from when document was loaded from DB
+          const initialState = (this as any).__initialState || {};
+          (this as any).__originalValues[field] = initialState[field];
         });
       }
     }
@@ -39,8 +55,15 @@ export function activityPlugin<T extends Document>(schema: Schema<T>, options: P
   // Log activity after successful save
   schema.post('save', async function(doc: T & { userId?: Types.ObjectId }) {
     try {
-      if (doc.isNew) {
-        // New document created
+      if ((doc as any).__wasNew) {
+        // New document created - store initial state for future change tracking
+        if (trackedFields.length > 0) {
+          (doc as any).__initialState = {};
+          trackedFields.forEach(field => {
+            (doc as any).__initialState[field] = doc.get(field);
+          });
+        }
+
         if (doc.userId) {
           await logActivity({
             userId: doc.userId,
@@ -89,6 +112,8 @@ export function activityPlugin<T extends Document>(schema: Schema<T>, options: P
   });
 
   // Handle updateOne, updateMany, findOneAndUpdate operations
+  // Note: updateMany affects multiple documents but logs only one activity (schema-level tracking)
+  // For per-document tracking on bulk operations, consider using individual updates
   schema.pre(['updateOne', 'updateMany', 'findOneAndUpdate'], function() {
     // Store the filter for later use in post hook
     (this as any).__filter = this.getFilter();
@@ -107,8 +132,8 @@ export function activityPlugin<T extends Document>(schema: Schema<T>, options: P
         );
 
         if (updatedFields.length > 0) {
-          // Try to extract userId from the update or filter
-          const userId = update.userId || update.$set?.userId || filter.userId;
+          // Try to extract userId from update, filter, or context as fallback
+          const userId = update.userId || update.$set?.userId || filter.userId || activityContext.getUserId();
 
           if (userId) {
             await logActivity({

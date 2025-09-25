@@ -84,6 +84,8 @@ describe('Activity Logger', () => {
           type: 'post_created',
           meta: { index: i }
         });
+        // Small delay to ensure different timestamps
+        await new Promise(resolve => setTimeout(resolve, 10));
       }
 
       const page1 = await getActivityFeed(userId.toString(), {
@@ -98,8 +100,8 @@ describe('Activity Logger', () => {
 
       expect(page1).toHaveLength(2);
       expect(page2).toHaveLength(2);
-      expect(page1[0].meta?.index).toBe(4); // Most recent first
-      expect(page2[0].meta?.index).toBe(2);
+      expect(page1[0].meta?.index).toBe(4); // Most recent first (index 4)
+      expect(page2[0].meta?.index).toBe(2); // Third most recent (index 2)
     });
   });
 
@@ -115,11 +117,17 @@ describe('Activity Logger', () => {
         type: 'post_created'
       });
 
+      // Small delay to ensure different timestamps
+      await new Promise(resolve => setTimeout(resolve, 10));
+
       await logActivity({
         userId: userId2,
         entity: { type: 'post', id: entityId },
         type: 'post_liked'
       });
+
+      // Small delay to ensure different timestamps
+      await new Promise(resolve => setTimeout(resolve, 10));
 
       // Activity for different entity
       await logActivity({

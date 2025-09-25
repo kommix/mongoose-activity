@@ -46,5 +46,5 @@ class ActivityEventEmitter extends EventEmitter {
 
 export const activityEvents = new ActivityEventEmitter();
 
-// Increase max listeners for production use
-activityEvents.setMaxListeners(100);
+// Set unlimited listeners to avoid memory leak warnings in large applications
+activityEvents.setMaxListeners(0);

@@ -8,26 +8,45 @@ export async function logActivity(params: ActivityLogParams): Promise<void> {
     // Get context if available
     const context = activityContext.get();
 
+    // Warn if context is missing and no userId provided
+    if (!context && !params.userId) {
+      console.warn('[mongoose-activity] ActivityContext not initialized for this request. Consider using activityContext.run() in your middleware or provide userId explicitly.');
+    }
+
     // Merge context data
-    const activityData = {
+    const contextMeta = {
+      ...(context?.requestId && { requestId: context.requestId }),
+      ...(context?.ip && { ip: context.ip }),
+      ...(context?.sessionId && { sessionId: context.sessionId })
+    };
+
+    const meta = { ...params.meta, ...contextMeta };
+    const activityData: any = {
       userId: params.userId || context?.userId,
       entity: {
         type: params.entity.type,
         id: params.entity.id
       },
       type: params.type,
-      meta: {
-        ...params.meta,
-        ...(context?.requestId && { requestId: context.requestId }),
-        ...(context?.ip && { ip: context.ip }),
-        ...(context?.sessionId && { sessionId: context.sessionId })
-      },
       createdAt: new Date()
     };
 
+    // Only add meta if there's content to add
+    if (Object.keys(meta).length > 0) {
+      activityData.meta = meta;
+    }
+
     // Emit before-log event (allows cancellation)
-    const shouldLog = activityEvents.emit('activity:before-log', activityData);
-    if (shouldLog === false) {
+    let shouldCancel = false;
+    const listeners = activityEvents.listeners('activity:before-log');
+    for (const listener of listeners) {
+      const result = (listener as any)(activityData);
+      if (result === false) {
+        shouldCancel = true;
+        break;
+      }
+    }
+    if (shouldCancel) {
       return;
     }
 

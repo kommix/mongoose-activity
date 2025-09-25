@@ -88,8 +88,10 @@ describe('mongoose-activity', () => {
 
   describe('Activity Plugin', () => {
     let TestUserModel: mongoose.Model<ITestUser>;
+    let testCounter = 0;
 
     beforeEach(() => {
+      testCounter++;
       const testUserSchema = new Schema<ITestUser>({
         userId: { type: Schema.Types.ObjectId, required: true },
         name: { type: String, required: true },
@@ -102,11 +104,8 @@ describe('mongoose-activity', () => {
         collectionName: 'users'
       });
 
-      TestUserModel = mongoose.model<ITestUser>('TestUser', testUserSchema);
-    });
-
-    afterEach(() => {
-      mongoose.deleteModel('TestUser');
+      const modelName = `TestUser${testCounter}`;
+      TestUserModel = mongoose.model<ITestUser>(modelName, testUserSchema);
     });
 
     it('should log activity when a new document is created', async () => {
@@ -192,8 +191,6 @@ describe('mongoose-activity', () => {
 
       // Update non-tracked field (none in this case, but let's test with a field not in trackedFields)
       // Since all fields are tracked in our test, let's create a new model
-      mongoose.deleteModel('TestUser');
-
       const newSchema = new Schema<ITestUser>({
         userId: { type: Schema.Types.ObjectId, required: true },
         name: { type: String, required: true },
@@ -206,7 +203,7 @@ describe('mongoose-activity', () => {
         collectionName: 'users'
       });
 
-      const NewTestUserModel = mongoose.model<ITestUser>('TestUser2', newSchema);
+      const NewTestUserModel = mongoose.model<ITestUser>(`TestUser${testCounter}_2`, newSchema);
 
       const newUser = new NewTestUserModel({
         userId,
