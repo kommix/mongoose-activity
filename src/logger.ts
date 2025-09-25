@@ -10,14 +10,16 @@ export async function logActivity(params: ActivityLogParams): Promise<void> {
 
     // Warn if context is missing and no userId provided
     if (!context && !params.userId) {
-      console.warn('[mongoose-activity] ActivityContext not initialized for this request. Consider using activityContext.run() in your middleware or provide userId explicitly.');
+      console.warn(
+        '[mongoose-activity] ActivityContext not initialized for this request. Consider using activityContext.run() in your middleware or provide userId explicitly.'
+      );
     }
 
     // Merge context data
     const contextMeta = {
       ...(context?.requestId && { requestId: context.requestId }),
       ...(context?.ip && { ip: context.ip }),
-      ...(context?.sessionId && { sessionId: context.sessionId })
+      ...(context?.sessionId && { sessionId: context.sessionId }),
     };
 
     const meta = { ...params.meta, ...contextMeta };
@@ -25,10 +27,10 @@ export async function logActivity(params: ActivityLogParams): Promise<void> {
       userId: params.userId || context?.userId,
       entity: {
         type: params.entity.type,
-        id: params.entity.id
+        id: params.entity.id,
       },
       type: params.type,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
 
     // Only add meta if there's content to add
@@ -79,7 +81,7 @@ export async function getActivityFeed(
     entityType,
     activityType,
     startDate,
-    endDate
+    endDate,
   } = options;
 
   const query: any = { userId };
@@ -117,17 +119,11 @@ export async function getEntityActivity(
     endDate?: Date;
   } = {}
 ) {
-  const {
-    limit = 50,
-    skip = 0,
-    activityType,
-    startDate,
-    endDate
-  } = options;
+  const { limit = 50, skip = 0, activityType, startDate, endDate } = options;
 
   const query: any = {
     'entity.type': entityType,
-    'entity.id': entityId
+    'entity.id': entityId,
   };
 
   if (activityType) {

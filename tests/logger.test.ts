@@ -1,6 +1,11 @@
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import { Activity, logActivity, getActivityFeed, getEntityActivity } from '../src';
+import {
+  Activity,
+  logActivity,
+  getActivityFeed,
+  getEntityActivity,
+} from '../src';
 
 describe('Activity Logger', () => {
   let mongoServer: MongoMemoryServer;
@@ -31,14 +36,14 @@ describe('Activity Logger', () => {
         userId,
         entity: { type: 'post', id: entityId1 },
         type: 'post_created',
-        meta: { title: 'First Post' }
+        meta: { title: 'First Post' },
       });
 
       await logActivity({
         userId,
         entity: { type: 'comment', id: entityId2 },
         type: 'comment_created',
-        meta: { content: 'Great post!' }
+        meta: { content: 'Great post!' },
       });
 
       const feed = await getActivityFeed(userId.toString());
@@ -56,17 +61,17 @@ describe('Activity Logger', () => {
       await logActivity({
         userId,
         entity: { type: 'post', id: entityId1 },
-        type: 'post_created'
+        type: 'post_created',
       });
 
       await logActivity({
         userId,
         entity: { type: 'comment', id: entityId2 },
-        type: 'comment_created'
+        type: 'comment_created',
       });
 
       const feed = await getActivityFeed(userId.toString(), {
-        entityType: 'post'
+        entityType: 'post',
       });
 
       expect(feed).toHaveLength(1);
@@ -82,20 +87,20 @@ describe('Activity Logger', () => {
           userId,
           entity: { type: 'post', id: new mongoose.Types.ObjectId() },
           type: 'post_created',
-          meta: { index: i }
+          meta: { index: i },
         });
         // Small delay to ensure different timestamps
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
       }
 
       const page1 = await getActivityFeed(userId.toString(), {
         limit: 2,
-        skip: 0
+        skip: 0,
       });
 
       const page2 = await getActivityFeed(userId.toString(), {
         limit: 2,
-        skip: 2
+        skip: 2,
       });
 
       expect(page1).toHaveLength(2);
@@ -114,34 +119,41 @@ describe('Activity Logger', () => {
       await logActivity({
         userId: userId1,
         entity: { type: 'post', id: entityId },
-        type: 'post_created'
+        type: 'post_created',
       });
 
       // Small delay to ensure different timestamps
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       await logActivity({
         userId: userId2,
         entity: { type: 'post', id: entityId },
-        type: 'post_liked'
+        type: 'post_liked',
       });
 
       // Small delay to ensure different timestamps
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Activity for different entity
       await logActivity({
         userId: userId1,
         entity: { type: 'post', id: new mongoose.Types.ObjectId() },
-        type: 'post_created'
+        type: 'post_created',
       });
 
-      const entityActivity = await getEntityActivity('post', entityId.toString());
+      const entityActivity = await getEntityActivity(
+        'post',
+        entityId.toString()
+      );
 
       expect(entityActivity).toHaveLength(2);
       expect(entityActivity[0].type).toBe('post_liked'); // Most recent first
       expect(entityActivity[1].type).toBe('post_created');
-      expect(entityActivity.every(a => a.entity.id.toString() === entityId.toString())).toBe(true);
+      expect(
+        entityActivity.every(
+          (a) => a.entity.id.toString() === entityId.toString()
+        )
+      ).toBe(true);
     });
 
     it('should filter entity activity by activity type', async () => {
@@ -151,18 +163,22 @@ describe('Activity Logger', () => {
       await logActivity({
         userId,
         entity: { type: 'post', id: entityId },
-        type: 'post_created'
+        type: 'post_created',
       });
 
       await logActivity({
         userId,
         entity: { type: 'post', id: entityId },
-        type: 'post_updated'
+        type: 'post_updated',
       });
 
-      const entityActivity = await getEntityActivity('post', entityId.toString(), {
-        activityType: 'post_created'
-      });
+      const entityActivity = await getEntityActivity(
+        'post',
+        entityId.toString(),
+        {
+          activityType: 'post_created',
+        }
+      );
 
       expect(entityActivity).toHaveLength(1);
       expect(entityActivity[0].type).toBe('post_created');

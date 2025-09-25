@@ -36,10 +36,10 @@ describe('mongoose-activity', () => {
         userId,
         entity: {
           type: 'user',
-          id: entityId
+          id: entityId,
         },
         type: 'user_created',
-        meta: { test: 'data' }
+        meta: { test: 'data' },
       });
 
       await activity.save();
@@ -62,13 +62,13 @@ describe('mongoose-activity', () => {
         userId,
         entity: {
           type: 'booking',
-          id: entityId
+          id: entityId,
         },
         type: 'booking_requested',
         meta: {
           amount: 100,
-          currency: 'USD'
-        }
+          currency: 'USD',
+        },
       });
 
       const activities = await Activity.find({});
@@ -81,7 +81,7 @@ describe('mongoose-activity', () => {
       expect(activity.type).toBe('booking_requested');
       expect(activity.meta).toEqual({
         amount: 100,
-        currency: 'USD'
+        currency: 'USD',
       });
     });
   });
@@ -96,12 +96,12 @@ describe('mongoose-activity', () => {
         userId: { type: Schema.Types.ObjectId, required: true },
         name: { type: String, required: true },
         email: { type: String, required: true },
-        status: { type: String, default: 'active' }
+        status: { type: String, default: 'active' },
       });
 
       testUserSchema.plugin(activityPlugin, {
         trackedFields: ['name', 'email', 'status'],
-        collectionName: 'users'
+        collectionName: 'users',
       });
 
       const modelName = `TestUser${testCounter}`;
@@ -115,13 +115,13 @@ describe('mongoose-activity', () => {
         userId,
         name: 'John Doe',
         email: 'john@example.com',
-        status: 'active'
+        status: 'active',
       });
 
       await user.save();
 
       // Wait a bit for the post hook to execute
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       const activities = await Activity.find({});
       expect(activities).toHaveLength(1);
@@ -134,7 +134,7 @@ describe('mongoose-activity', () => {
       expect(activity.meta).toEqual({
         name: 'John Doe',
         email: 'john@example.com',
-        status: 'active'
+        status: 'active',
       });
     });
 
@@ -145,7 +145,7 @@ describe('mongoose-activity', () => {
         userId,
         name: 'John Doe',
         email: 'john@example.com',
-        status: 'active'
+        status: 'active',
       });
 
       await user.save();
@@ -159,7 +159,7 @@ describe('mongoose-activity', () => {
       await user.save();
 
       // Wait for post hook
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       const activities = await Activity.find({});
       expect(activities).toHaveLength(1);
@@ -181,7 +181,7 @@ describe('mongoose-activity', () => {
         userId,
         name: 'John Doe',
         email: 'john@example.com',
-        status: 'active'
+        status: 'active',
       });
 
       await user.save();
@@ -195,21 +195,24 @@ describe('mongoose-activity', () => {
         userId: { type: Schema.Types.ObjectId, required: true },
         name: { type: String, required: true },
         email: { type: String, required: true },
-        status: { type: String, default: 'active' }
+        status: { type: String, default: 'active' },
       });
 
       newSchema.plugin(activityPlugin, {
         trackedFields: ['name'], // Only track name
-        collectionName: 'users'
+        collectionName: 'users',
       });
 
-      const NewTestUserModel = mongoose.model<ITestUser>(`TestUser${testCounter}_2`, newSchema);
+      const NewTestUserModel = mongoose.model<ITestUser>(
+        `TestUser${testCounter}_2`,
+        newSchema
+      );
 
       const newUser = new NewTestUserModel({
         userId,
         name: 'John Doe',
         email: 'john@example.com',
-        status: 'active'
+        status: 'active',
       });
 
       await newUser.save();
@@ -219,7 +222,7 @@ describe('mongoose-activity', () => {
       newUser.email = 'newemail@example.com';
       await newUser.save();
 
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       const activities = await Activity.find({});
       expect(activities).toHaveLength(0);
