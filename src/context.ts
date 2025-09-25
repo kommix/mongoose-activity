@@ -1,8 +1,8 @@
 import { AsyncLocalStorage } from 'async_hooks';
-import { ObjectId } from 'mongoose';
+import { Types } from 'mongoose';
 
 export interface ActivityContext {
-  userId?: ObjectId;
+  userId?: Types.ObjectId;
   requestId?: string;
   ip?: string;
   userAgent?: string;
@@ -28,7 +28,7 @@ class ActivityContextManager {
     }
   }
 
-  getUserId(): ObjectId | undefined {
+  getUserId(): Types.ObjectId | undefined {
     return this.get()?.userId;
   }
 

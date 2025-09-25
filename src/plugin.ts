@@ -1,4 +1,4 @@
-import { Schema, Document, Query, ObjectId } from 'mongoose';
+import { Schema, Document, Types } from 'mongoose';
 import { PluginOptions } from './types';
 import { logActivity } from './logger';
 
@@ -37,7 +37,7 @@ export function activityPlugin<T extends Document>(schema: Schema<T>, options: P
   });
 
   // Log activity after successful save
-  schema.post('save', async function(doc: T & { userId?: ObjectId }) {
+  schema.post('save', async function(doc: T & { userId?: Types.ObjectId }) {
     try {
       if (doc.isNew) {
         // New document created
@@ -46,7 +46,7 @@ export function activityPlugin<T extends Document>(schema: Schema<T>, options: P
             userId: doc.userId,
             entity: {
               type: collectionName,
-              id: doc._id as ObjectId
+              id: doc._id as Types.ObjectId
             },
             type: `${collectionName}_created`,
             meta: trackedFields.length > 0 ?
@@ -73,7 +73,7 @@ export function activityPlugin<T extends Document>(schema: Schema<T>, options: P
             userId: doc.userId,
             entity: {
               type: collectionName,
-              id: doc._id as ObjectId
+              id: doc._id as Types.ObjectId
             },
             type: activityType,
             meta: {
@@ -95,7 +95,7 @@ export function activityPlugin<T extends Document>(schema: Schema<T>, options: P
     (this as any).__update = this.getUpdate();
   });
 
-  schema.post(['updateOne', 'updateMany', 'findOneAndUpdate'], async function(result: any) {
+  schema.post(['updateOne', 'updateMany', 'findOneAndUpdate'], async function(_result: any) {
     try {
       const filter = (this as any).__filter;
       const update = (this as any).__update;
@@ -112,15 +112,15 @@ export function activityPlugin<T extends Document>(schema: Schema<T>, options: P
 
           if (userId) {
             await logActivity({
-              userId: userId as ObjectId,
+              userId: userId as Types.ObjectId,
               entity: {
                 type: collectionName,
-                id: filter._id as ObjectId
+                id: filter._id as Types.ObjectId
               },
               type: activityType,
               meta: {
                 updatedFields,
-                updateOperation: this.op
+                updateOperation: (this as any).op
               }
             });
           }

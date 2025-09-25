@@ -1,10 +1,10 @@
-import { ObjectId, Document } from 'mongoose';
+import { Types, Document } from 'mongoose';
 
 export interface IActivity extends Document {
-  userId: ObjectId;
+  userId: Types.ObjectId;
   entity: {
     type: string;
-    id: ObjectId;
+    id: Types.ObjectId;
   };
   type: string;
   meta?: Record<string, any>;
@@ -12,10 +12,10 @@ export interface IActivity extends Document {
 }
 
 export interface ActivityLogParams {
-  userId: ObjectId;
+  userId: Types.ObjectId;
   entity: {
     type: string;
-    id: ObjectId;
+    id: Types.ObjectId;
   };
   type: string;
   meta?: Record<string, any>;

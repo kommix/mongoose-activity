@@ -17,7 +17,7 @@ describe('Activity Logger', () => {
   });
 
   beforeEach(async () => {
-    await mongoose.connection.db.dropDatabase();
+    await mongoose.connection.db?.dropDatabase();
   });
 
   describe('getActivityFeed', () => {
@@ -98,8 +98,8 @@ describe('Activity Logger', () => {
 
       expect(page1).toHaveLength(2);
       expect(page2).toHaveLength(2);
-      expect(page1[0].meta.index).toBe(4); // Most recent first
-      expect(page2[0].meta.index).toBe(2);
+      expect(page1[0].meta?.index).toBe(4); // Most recent first
+      expect(page2[0].meta?.index).toBe(2);
     });
   });
 

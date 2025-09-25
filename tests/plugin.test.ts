@@ -1,9 +1,9 @@
-import mongoose, { Schema, Document, ObjectId } from 'mongoose';
+import mongoose, { Schema, Document, Types } from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { activityPlugin, Activity, logActivity } from '../src';
 
 interface ITestUser extends Document {
-  userId: ObjectId;
+  userId: Types.ObjectId;
   name: string;
   email: string;
   status: string;
@@ -24,7 +24,7 @@ describe('mongoose-activity', () => {
   });
 
   beforeEach(async () => {
-    await mongoose.connection.db.dropDatabase();
+    await mongoose.connection.db?.dropDatabase();
   });
 
   describe('Activity Model', () => {
@@ -167,12 +167,12 @@ describe('mongoose-activity', () => {
 
       const activity = activities[0];
       expect(activity.type).toBe('document_updated');
-      expect(activity.meta.changes).toBeDefined();
-      expect(activity.meta.changes.name.from).toBe('John Doe');
-      expect(activity.meta.changes.name.to).toBe('Jane Doe');
-      expect(activity.meta.changes.status.from).toBe('active');
-      expect(activity.meta.changes.status.to).toBe('inactive');
-      expect(activity.meta.modifiedFields).toEqual(['name', 'status']);
+      expect(activity.meta?.changes).toBeDefined();
+      expect(activity.meta?.changes.name.from).toBe('John Doe');
+      expect(activity.meta?.changes.name.to).toBe('Jane Doe');
+      expect(activity.meta?.changes.status.from).toBe('active');
+      expect(activity.meta?.changes.status.to).toBe('inactive');
+      expect(activity.meta?.modifiedFields).toEqual(['name', 'status']);
     });
 
     it('should not log activity when non-tracked fields are updated', async () => {
