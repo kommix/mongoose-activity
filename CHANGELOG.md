@@ -1,0 +1,26 @@
+# Changelog
+
+## 1.0.0 (2025-09-26)
+
+
+### Features
+
+* Add comprehensive tests for activity logging and middleware integration ([ab8779b](https://github.com/kommix/mongoose-activity/commit/ab8779b68cb1ab4b45afa08ca30be5159724cddd))
+* Add comprehensive tests for edge cases, error handling, and session management ([d718775](https://github.com/kommix/mongoose-activity/commit/d71877500b5049088a8a243d8faefe4c56e5ae56))
+* add GitHub workflows for publishing to NPM and handling releases ([e6fd597](https://github.com/kommix/mongoose-activity/commit/e6fd5970a1fb12d614be9cace908664e50e53f24))
+* add kommix logo SVG ([346776d](https://github.com/kommix/mongoose-activity/commit/346776dcb49597eb2a34f3548600da6331437c72))
+* enhance activity logging with new functions and improved schema validation; add tests for flush operations ([c6f985e](https://github.com/kommix/mongoose-activity/commit/c6f985e0ed2d09b5d6df0909e88258a317ffe99d))
+* finalize core improvements 🚀 ([4ee8cde](https://github.com/kommix/mongoose-activity/commit/4ee8cdeb61aeb7b7be0fc7b153f42563893522de))
+* implement deletion tracking for activity logs; add support for deleteOne, deleteMany, and findOneAndDelete operations with performance optimizations and tests ([fe19c82](https://github.com/kommix/mongoose-activity/commit/fe19c82d7752cdcf55946ebd5823b203bebdb66b))
+* initial mongoose activity tracking plugin with core features ([a97f9a3](https://github.com/kommix/mongoose-activity/commit/a97f9a30513cd4f430ea0d2ff36e55597ada806e))
+* initial mongoose activity tracking plugin with core features ([9457b6b](https://github.com/kommix/mongoose-activity/commit/9457b6bd6bbe159cd3c8460be176dea70f9829a7))
+* production-ready improvements for mongoose-activity plugin 🎉 ([927973b](https://github.com/kommix/mongoose-activity/commit/927973b0f3283a608375f9313d4db135248ae482))
+* update README and package.json for beta release; add known limitations and improve descriptions ([2328c60](https://github.com/kommix/mongoose-activity/commit/2328c60e573d203f954764777fd5d4fe36ed6fc6))
+* update README and package.json for clarity and improved descriptions; add funding information ([d6756d2](https://github.com/kommix/mongoose-activity/commit/d6756d20aee0d64e08931df2beb21b732187eb87))
+
+
+### Bug Fixes
+
+* remove unnecessary div wrapper around kommix logo in README ([e73a8b6](https://github.com/kommix/mongoose-activity/commit/e73a8b6d0c5bb1aac434bc34d682e09b263a53cd))
+* update version from 1.0.0-rc.1 to 1.0.0 in package.json ([1dc87e5](https://github.com/kommix/mongoose-activity/commit/1dc87e5645a8f9cd8fa81c4124e6fe543d0c6194))
+* validate cutoffDate in prune method to prevent invalid date errors ([2328c60](https://github.com/kommix/mongoose-activity/commit/2328c60e573d203f954764777fd5d4fe36ed6fc6))
