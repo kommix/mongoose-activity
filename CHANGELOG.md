@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.2](https://github.com/kommix/mongoose-activity/compare/v1.0.1...v1.0.2) (2025-09-26)
+
+
+### Bug Fixes
+
+* bump the jest group with 2 updates ([d165ec8](https://github.com/kommix/mongoose-activity/commit/d165ec8751ea7de47068713e7a60f8212bb36aba))
+* update Node.js compatibility to version 18+ ([dce9a5d](https://github.com/kommix/mongoose-activity/commit/dce9a5de6d9de01e5cab6a9fb2dec3c7c202d0ab))
+* update Node.js version matrix to remove support for 16 ([82520fb](https://github.com/kommix/mongoose-activity/commit/82520fb537e5c773c94039ea6066f385c3f01687))
+
 ## [1.0.1](https://github.com/kommix/mongoose-activity/compare/v1.0.0...v1.0.1) (2025-09-26)
 
 
