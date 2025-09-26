@@ -80,7 +80,7 @@ describe('Deletion Tracking', () => {
       expect(deletionActivity.userId.toString()).toBe(userId.toString());
       expect(deletionActivity.entity.type).toBe('users');
       expect(deletionActivity.entity.id.toString()).toBe(user._id.toString());
-      expect(deletionActivity.meta?.operation).toBe('deleteOne');
+      expect(deletionActivity.meta?.deleteType).toBe('deleteOne');
       expect(deletionActivity.meta?.deletedCount).toBe(1);
       expect(deletionActivity.meta?.deletedFields.name).toBe('John Doe');
       expect(deletionActivity.meta?.deletedFields.email).toBe(
@@ -206,7 +206,7 @@ describe('Deletion Tracking', () => {
 
       for (const activity of activities) {
         expect(activity.type).toBe('users_deleted');
-        expect(activity.meta?.operation).toBe('deleteMany');
+        expect(activity.meta?.deleteType).toBe('deleteMany');
         expect(activity.meta?.deletedCount).toBe(2); // Total count for the operation
         expect(activity.meta?.deletedFields.department).toBe('Engineering');
         expect(['User 1', 'User 2']).toContain(
@@ -282,7 +282,7 @@ describe('Deletion Tracking', () => {
 
       const deletionActivity = activities[0];
       expect(deletionActivity.type).toBe('users_deleted');
-      expect(deletionActivity.meta?.operation).toBe('findOneAndDelete');
+      expect(deletionActivity.meta?.deleteType).toBe('findOneAndDelete');
       expect(deletionActivity.meta?.deletedFields.name).toBe('To Be Deleted');
       expect(deletionActivity.meta?.deletedFields.role).toBe('admin');
       expect(deletionActivity.meta?.deletedFields.email).toBeUndefined(); // Not in deletionFields
@@ -397,12 +397,14 @@ describe('Deletion Tracking', () => {
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining(
           '[mongoose-activity] trackedFields field "invalidField" not found'
-        )
+        ),
+        undefined
       );
       expect(consoleSpy).toHaveBeenCalledWith(
         expect.stringContaining(
           '[mongoose-activity] deletionFields field "nonExistentField" not found'
-        )
+        ),
+        undefined
       );
 
       consoleSpy.mockRestore();
@@ -557,7 +559,7 @@ describe('Deletion Tracking', () => {
       // Verify event was emitted
       expect(loggedActivity).toBeDefined();
       expect(loggedActivity.type).toBe('users_deleted');
-      expect(loggedActivity.meta?.operation).toBe('deleteOne');
+      expect(loggedActivity.meta?.deleteType).toBe('deleteOne');
     });
   });
 });
