@@ -22,14 +22,7 @@ class ConfigManager {
 
     // Update EventEmitter max listeners if changed
     if (options.maxListeners !== undefined) {
-      // Use dynamic import to avoid circular dependency
-      import('./events')
-        .then(({ activityEvents }) => {
-          activityEvents.setMaxListeners(options.maxListeners!);
-        })
-        .catch(() => {
-          // Silently ignore errors during shutdown/cleanup
-        });
+      this.updateEventEmitterMaxListeners(options.maxListeners);
     }
   }
 
@@ -46,13 +39,7 @@ class ConfigManager {
     this.config = defaults;
 
     // Reset EventEmitter max listeners
-    import('./events')
-      .then(({ activityEvents }) => {
-        activityEvents.setMaxListeners(defaults.maxListeners!);
-      })
-      .catch(() => {
-        // Silently ignore errors during shutdown/cleanup
-      });
+    this.updateEventEmitterMaxListeners(defaults.maxListeners!);
   }
 
   get(): GlobalConfig {
@@ -81,6 +68,18 @@ class ConfigManager {
 
   getMaxListeners(): number {
     return this.config.maxListeners || 50;
+  }
+
+  private updateEventEmitterMaxListeners(maxListeners: number): void {
+    // Use dynamic import to avoid circular dependency during module initialization
+    // This method can be called after all modules are loaded
+    import('./events')
+      .then(({ activityEvents }) => {
+        activityEvents.setMaxListeners(maxListeners);
+      })
+      .catch(() => {
+        // Silently ignore errors during shutdown/cleanup
+      });
   }
 }
 

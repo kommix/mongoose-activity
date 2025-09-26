@@ -199,9 +199,13 @@ export async function getEntityActivity(
  * Useful for graceful shutdown to ensure all activities are saved
  *
  * @param timeout Maximum time to wait in milliseconds (default: 30000)
+ * @param signal Optional AbortSignal for cancellation support
  * @returns Promise that resolves when all operations complete or timeout is reached
  */
-export async function flushActivities(timeout: number = 30000): Promise<void> {
+export async function flushActivities(
+  timeout: number = 30000,
+  signal?: AbortSignal
+): Promise<void> {
   if (pendingOperations.size === 0) {
     return;
   }
@@ -219,11 +223,27 @@ export async function flushActivities(timeout: number = 30000): Promise<void> {
     }, timeout);
   });
 
+  // Create abort promise if signal is provided
+  const abortPromise = signal
+    ? new Promise<void>((_, reject) => {
+        if (signal.aborted) {
+          reject(new Error('Activity flush aborted'));
+          return;
+        }
+        signal.addEventListener('abort', () => {
+          reject(new Error('Activity flush aborted'));
+        });
+      })
+    : null;
+
   try {
-    // Race between all operations completing and timeout
-    await Promise.race([Promise.allSettled(operations), timeoutPromise]);
+    const promises = [Promise.allSettled(operations), timeoutPromise];
+    if (abortPromise) promises.push(abortPromise);
+
+    // Race between all operations completing, timeout, and abort signal
+    await Promise.race(promises);
   } catch (error) {
-    console.warn('[mongoose-activity] Flush timeout:', error);
+    console.warn('[mongoose-activity] Flush interrupted:', error);
     throw error;
   }
 }
