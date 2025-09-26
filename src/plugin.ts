@@ -465,7 +465,9 @@ export function activityPlugin<T extends Document>(
               }
 
               const meta = MetaBuilder.forBulkDelete(result.deletedCount, {
-                documentIds: deletedDocs.map((doc: any) => (doc._id as { toString(): string }).toString()),
+                documentIds: deletedDocs.map((doc: any) =>
+                  (doc._id as { toString(): string }).toString()
+                ),
                 deletedFieldsSample,
                 fields: deletionFields.length > 0 ? deletionFields : undefined,
               });
