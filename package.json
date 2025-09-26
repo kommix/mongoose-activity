@@ -1,8 +1,9 @@
 {
   "name": "@kommix/mongoose-activity",
   "version": "1.0.0-beta.1",
-  "description": "Feature-complete, production-ready Mongoose plugin for activity feeds, audit logs, and timelines with TypeScript, zero dependencies, async logging, and enterprise features",
+  "description": "Modern Mongoose plugin for activity feeds, audit logs, and timelines with async logging, TypeScript, and zero dependencies",
   "main": "dist/index.js",
+  "sideEffects": false,
   "module": "dist/esm/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -54,6 +55,10 @@
     "url": "https://github.com/kommix/mongoose-activity/issues"
   },
   "homepage": "https://github.com/kommix/mongoose-activity#readme",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/kommix"
+  },
   "files": [
     "dist/**/*",
     "README.md",

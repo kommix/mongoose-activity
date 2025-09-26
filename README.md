@@ -1,6 +1,12 @@
 # @kommix/mongoose-activity
 
-> **⚠️ Beta Release**: This package is feature-complete and production-ready, but still in beta. We're using it in production at Kommix and actively seeking feedback. Please report issues on [GitHub](https://github.com/kommix/mongoose-activity/issues).
+[![npm version](https://img.shields.io/npm/v/@kommix/mongoose-activity)](https://www.npmjs.com/package/@kommix/mongoose-activity)
+[![build](https://img.shields.io/github/actions/workflow/status/kommix/mongoose-activity/ci.yml)](https://github.com/kommix/mongoose-activity/actions)
+[![coverage](https://img.shields.io/badge/coverage-85.86%25-brightgreen)](https://github.com/kommix/mongoose-activity)
+[![license](https://img.shields.io/github/license/kommix/mongoose-activity)](LICENSE)
+[![npm downloads](https://img.shields.io/npm/dm/@kommix/mongoose-activity)](https://www.npmjs.com/package/@kommix/mongoose-activity)
+
+> **⚠️ Beta Release**: Feature-complete, production-tested, and in active beta. Already powering Kommix production workloads.
 
 > A **modern, production-ready, and high-performance** Mongoose plugin for automatically logging user activity into a central Activity collection with advanced features.
 
@@ -19,6 +25,7 @@ Build **activity feeds, timelines, audit logs, and real-time analytics** in your
 - 🔄 **Event System** - Real-time event emission with cancellation and chaining support
 - 🌐 **Request Context** - Automatic request context tracking with Express/Koa middleware
 - 🛡️ **Production Ready** - Error handling, session support, concurrent operations, and data retention
+- ⚠️ **Note** - Deletions (`deleteOne/deleteMany`) are not tracked yet. See [Known Limitations](#-known-limitations)
 
 ## 🚀 Installation
 
@@ -699,8 +706,8 @@ Contributions welcome! Please ensure:
 
 Performance characteristics (tested with 100k activities):
 
-- **Sync logging**: ~2ms per activity
-- **Async logging**: ~0.1ms per activity (fire-and-forget)
+- **Sync logging**: ~2ms per operation
+- **Async logging**: ~0.1ms per operation (fire-and-forget)
 - **Activity feed query**: ~5ms (50 items, properly indexed)
 - **Entity history query**: ~3ms (100 items, properly indexed)
 - **Memory usage**: <10MB for 100k activities (with efficient indexing)
