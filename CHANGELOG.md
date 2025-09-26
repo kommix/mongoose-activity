@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0](https://github.com/kommix/mongoose-activity/compare/v1.0.3...v1.1.0) (2025-09-26)
+
+
+### Features
+
+* Update kommix logo color and add comprehensive API documentation ([e6bcb8d](https://github.com/kommix/mongoose-activity/commit/e6bcb8dcc75edb777ae1bea355918cb2715a31e1))
+* Update kommix logo color and add comprehensive API documentation ([fb9d3c1](https://github.com/kommix/mongoose-activity/commit/fb9d3c1c622b0d1a0276d2d49eb389062f96f622))
+
 ## [1.0.3](https://github.com/kommix/mongoose-activity/compare/v1.0.2...v1.0.3) (2025-09-26)
 
 
