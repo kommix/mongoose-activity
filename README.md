@@ -1,5 +1,7 @@
 # @kommix/mongoose-activity
 
+> **⚠️ Beta Release**: This package is feature-complete and production-ready, but still in beta. We're using it in production at Kommix and actively seeking feedback. Please report issues on [GitHub](https://github.com/kommix/mongoose-activity/issues).
+
 > A **modern, production-ready, and high-performance** Mongoose plugin for automatically logging user activity into a central Activity collection with advanced features.
 
 Build **activity feeds, timelines, audit logs, and real-time analytics** in your Mongoose applications with comprehensive configuration options and enterprise-grade features.
@@ -7,7 +9,7 @@ Build **activity feeds, timelines, audit logs, and real-time analytics** in your
 ## ✨ Features
 
 - 🚀 **Modern & Fast** - Built with TypeScript, optimized performance with smart indexing
-- 🪶 **Lightweight** - Zero dependencies, plug-and-play architecture
+- 📦 **Zero Dependencies** - No external packages required, only Mongoose peer dependency
 - 🔧 **Easy Integration** - Simple plugin system that works with existing Mongoose schemas
 - 📊 **Advanced Field Tracking** - Automatically track changes to specific fields with before/after values
 - 🎯 **Flexible Logging** - Manual activity logging with custom event types and rich metadata
@@ -709,6 +711,69 @@ Performance characteristics (tested with 100k activities):
 - **Injection prevention**: Uses parameterized queries, not string concatenation
 - **Memory safety**: TTL and manual cleanup prevent unbounded growth
 - **Error isolation**: Activity logging failures never crash your application
+
+## ⚠️ Known Limitations
+
+### Production Considerations
+
+While this package is production-ready for most applications, be aware of these limitations:
+
+#### 1. **Incomplete Bulk and Deletion Tracking**
+- **Deletions Not Tracked**: `deleteOne`, `deleteMany`, `findOneAndDelete` operations are not logged
+- **Bulk Updates**: `updateMany` creates a single activity entry, not one per modified document
+- **Workaround**: Use document-level operations when individual audit trails are critical
+
+```javascript
+// ❌ Not tracked individually
+await User.updateMany({ status: 'active' }, { status: 'inactive' });
+// Creates 1 activity for potentially 100s of documents
+
+// ✅ Tracked individually (but slower)
+const users = await User.find({ status: 'active' });
+for (const user of users) {
+  user.status = 'inactive';
+  await user.save(); // Each creates an activity
+}
+```
+
+#### 2. **Inconsistent Audit Detail**
+- `save()` operations: Full before/after values ✅
+- `findOneAndUpdate()`: Only current values (no "before" state) ⚠️
+- `updateOne()`: Only knows changed fields, not original values ⚠️
+
+#### 3. **Performance Considerations**
+- Each tracked operation creates an additional database write
+- High-volume applications should use `asyncLogging: true`
+- Consider disabling for batch imports or migrations
+
+#### 4. **Not Suitable For**
+- **Strict Compliance**: Systems requiring legally-compliant audit trails (use dedicated audit databases)
+- **Complete Forensics**: When every single database operation must be tracked
+- **Simple Projects**: May be overkill for basic CRUD apps without audit requirements
+
+### When to Use This Package
+
+**✅ Perfect for:**
+- User activity feeds and timelines
+- Content management systems
+- Social platforms
+- Multi-tenant SaaS applications
+- General audit logging (80% of use cases)
+
+**❌ Consider alternatives for:**
+- Financial systems with strict audit requirements
+- Healthcare systems (HIPAA compliance)
+- Legal document management
+- Systems requiring deletion tracking
+
+### Roadmap for v2.0
+
+We're aware of these limitations and plan to address them:
+- [ ] Deletion tracking via mongoose middleware
+- [ ] Per-document activities for bulk operations (opt-in)
+- [ ] Consistent before/after state for all operations
+- [ ] Compliance mode with strict failure handling
+- [ ] Change streams integration for complete audit trail
 
 ## 🚀 Publishing
 

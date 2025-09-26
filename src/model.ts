@@ -97,6 +97,12 @@ ActivitySchema.statics.prune = async function (
     cutoffDate = olderThan;
   }
 
+  // Check for invalid date
+  if (isNaN(cutoffDate.getTime())) {
+    // Invalid date, return early with no deletions
+    return { deletedCount: 0 };
+  }
+
   const query: any = { createdAt: { $lt: cutoffDate } };
   if (entityType) {
     query['entity.type'] = entityType;

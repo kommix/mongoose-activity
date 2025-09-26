@@ -1,7 +1,7 @@
 {
   "name": "@kommix/mongoose-activity",
-  "version": "1.0.0",
-  "description": "A modern, lightweight, and fast Mongoose plugin for automatically logging user activity into a central Activity collection",
+  "version": "1.0.0-beta.1",
+  "description": "Feature-complete, production-ready Mongoose plugin for activity feeds, audit logs, and timelines with TypeScript, zero dependencies, async logging, and enterprise features",
   "main": "dist/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/index.d.ts",
@@ -30,20 +30,30 @@
     "activity-feed",
     "timeline",
     "audit",
-    "log",
+    "audit-log",
+    "tracking",
+    "logging",
+    "events",
+    "middleware",
+    "express",
+    "koa",
     "kommix",
-    "modern",
-    "lightweight",
-    "fast",
-    "plugin",
-    "typescript"
+    "typescript",
+    "async",
+    "transaction",
+    "context",
+    "production-ready"
   ],
-  "author": "Kommix",
+  "author": "Kommix <dev@kommix.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kommix/mongoose-activity.git"
+    "url": "git+https://github.com/kommix/mongoose-activity.git"
   },
+  "bugs": {
+    "url": "https://github.com/kommix/mongoose-activity/issues"
+  },
+  "homepage": "https://github.com/kommix/mongoose-activity#readme",
   "files": [
     "dist/**/*",
     "README.md",
