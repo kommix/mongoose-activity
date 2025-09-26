@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="./assets/kommix-logo.svg" alt="Kommix Logo" width="200" />
+</div>
+
 # @kommix/mongoose-activity
 
 [![npm version](https://img.shields.io/npm/v/@kommix/mongoose-activity)](https://www.npmjs.com/package/@kommix/mongoose-activity)
