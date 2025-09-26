@@ -4,9 +4,11 @@
 
 [![npm version](https://img.shields.io/npm/v/@kommix/mongoose-activity)](https://www.npmjs.com/package/@kommix/mongoose-activity)
 [![build](https://img.shields.io/github/actions/workflow/status/kommix/mongoose-activity/ci.yml)](https://github.com/kommix/mongoose-activity/actions)
-[![coverage](https://img.shields.io/badge/coverage-86.18%25-brightgreen)](https://github.com/kommix/mongoose-activity)
+[![coverage](https://img.shields.io/badge/coverage-91.93%25-brightgreen)](https://github.com/kommix/mongoose-activity)
 [![license](https://img.shields.io/github/license/kommix/mongoose-activity)](LICENSE)
 [![npm downloads](https://img.shields.io/npm/dm/@kommix/mongoose-activity)](https://www.npmjs.com/package/@kommix/mongoose-activity)
+
+📦 [npm](https://www.npmjs.com/package/@kommix/mongoose-activity) · 💻 [GitHub](https://github.com/kommix/mongoose-activity) · 📖 [Docs](https://github.com/kommix/mongoose-activity#readme)
 
 > **🚀 Release Candidate**: Feature-complete with full CRUD tracking, performance optimization, and enterprise-grade reliability. Ready for production use.
 
@@ -14,13 +16,19 @@
 
 Build **activity feeds, timelines, audit logs, and real-time analytics** in your Mongoose applications with comprehensive configuration options and enterprise-grade features.
 
+## 🎯 Why This Library?
+
+- ✅ **Complete Deletion Tracking** (rare in mongoose plugins) - Track `deleteOne`, `deleteMany`, and `findOneAndDelete` operations
+- ✅ **Full CRUD Lifecycle Coverage** - Comprehensive tracking of Create, Read, Update, Delete operations with performance optimization
+- ✅ **Enterprise-Grade Performance** - Bulk operations, async logging, TTL cleanup, and smart indexing for production workloads
+
 ## ✨ Features
 
 - 🚀 **Modern & Fast** - Built with TypeScript, optimized performance with smart indexing
+- 🗑️ **Complete Deletion Tracking** - Track `deleteOne`, `deleteMany`, and `findOneAndDelete` operations with performance optimization
 - 📦 **Zero Dependencies** - No external packages required, only Mongoose peer dependency
 - 🔧 **Easy Integration** - Simple plugin system that works with existing Mongoose schemas
 - 📊 **Advanced Field Tracking** - Automatically track changes to specific fields with before/after values
-- 🗑️ **Complete Deletion Tracking** - Track `deleteOne`, `deleteMany`, and `findOneAndDelete` operations with performance optimization
 - 🎯 **Flexible Logging** - Manual activity logging with custom event types and rich metadata
 - 📈 **Powerful Query API** - Built-in functions for activity feeds, entity history, and analytics
 - 🏗️ **TypeScript First** - Full TypeScript support with comprehensive type definitions
@@ -29,19 +37,13 @@ Build **activity feeds, timelines, audit logs, and real-time analytics** in your
 - 🌐 **Request Context** - Automatic request context tracking with Express/Koa middleware
 - 🛡️ **Production Ready** - Schema validation, error handling, session support, and enterprise-grade features
 
-## 🚀 Installation
+## 🚀 Installation & Quick Start
 
 ```bash
 npm install @kommix/mongoose-activity
 ```
 
-## 📖 Quick Start
-
-### 1. Install & Import
-
-```bash
-npm install @kommix/mongoose-activity
-```
+### 1. Import
 
 ```typescript
 // ESM
@@ -87,7 +89,7 @@ const userSchema = new mongoose.Schema({
   lastLogin: Date
 });
 
-// 🔌 Add the plugin - specify which fields to track
+// Add the plugin - specify which fields to track
 userSchema.plugin(activityPlugin, {
   trackedFields: ['name', 'email', 'status', 'profile.avatar'], // Track nested fields too
   collectionName: 'users' // Entity type for activities
@@ -95,7 +97,7 @@ userSchema.plugin(activityPlugin, {
 
 const User = mongoose.model('User', userSchema);
 
-// ✨ Now every save/update automatically logs activities!
+// Now every save/update automatically logs activities!
 const user = new User({
   userId: new mongoose.Types.ObjectId(),
   name: 'John Doe',
@@ -104,12 +106,12 @@ const user = new User({
 });
 
 await user.save();
-// 📝 Automatically logs: { type: 'users_created', entity: { type: 'users', id: user._id }, meta: { name: 'John Doe', email: '...', status: 'active' } }
+// Automatically logs: { type: 'users_created', entity: { type: 'users', id: user._id }, meta: { name: 'John Doe', email: '...', status: 'active' } }
 
 user.name = 'Jane Doe';
 user.status = 'inactive';
 await user.save();
-// 📝 Automatically logs: { type: 'document_updated', changes: { name: { from: 'John Doe', to: 'Jane Doe' }, status: { from: 'active', to: 'inactive' } }, modifiedFields: ['name', 'status'] }
+// Automatically logs: { type: 'document_updated', changes: { name: { from: 'John Doe', to: 'Jane Doe' }, status: { from: 'active', to: 'inactive' } }, modifiedFields: ['name', 'status'] }
 ```
 
 ### 3. Request Context Middleware
@@ -122,7 +124,7 @@ import { activityContextMiddleware } from '@kommix/mongoose-activity';
 
 const app = express();
 
-// 🔌 Add middleware to capture request context
+// Add middleware to capture request context
 app.use(activityContextMiddleware({
   extractUserId: (req) => req.user?.id,
   extractRequestId: (req) => req.id || req.headers['x-request-id'],
@@ -158,7 +160,7 @@ app.use(koaActivityContextMiddleware({
 For **custom business events** that aren't tied to model changes:
 
 ```typescript
-// 🎯 E-commerce example
+// E-commerce example
 await logActivity({
   userId: customerId,
   entity: { type: 'order', id: orderId },
@@ -172,7 +174,7 @@ await logActivity({
   }
 });
 
-// 🎯 Social media example with async logging
+// Social media example with async logging
 await logActivity({
   userId: authorId,
   entity: { type: 'post', id: postId },
@@ -185,7 +187,7 @@ await logActivity({
   asyncLogging: true // Fire-and-forget for high-performance scenarios
 });
 
-// 🎯 SaaS product example with transaction support
+// SaaS product example with transaction support
 const session = await mongoose.startSession();
 await session.withTransaction(async () => {
   await logActivity({
@@ -221,7 +223,7 @@ await User.deleteOne({ _id: userId });           // Single document deletion
 await User.deleteMany({ status: 'inactive' });   // Bulk deletion (per-document logs)
 await User.findOneAndDelete({ _id: userId });    // Find and delete
 
-// 📊 Performance optimization for large bulk operations
+// Performance optimization for large bulk operations
 userSchema.plugin(activityPlugin, {
   trackDeletions: true,
   bulkDeleteSummary: true,      // Force summary mode
@@ -255,7 +257,7 @@ userSchema.plugin(activityPlugin, {
 ```typescript
 import { getActivityFeed, getEntityActivity } from '@kommix/mongoose-activity';
 
-// 📊 Get user's personal activity feed
+// Get user's personal activity feed
 const feed = await getActivityFeed(userId, {
   limit: 20,
   entityType: 'order', // Optional: filter by entity type
@@ -264,7 +266,7 @@ const feed = await getActivityFeed(userId, {
   endDate: new Date('2024-01-31')
 });
 
-// 📊 Get all activity for a specific entity (audit trail)
+// Get all activity for a specific entity (audit trail)
 const orderHistory = await getEntityActivity('order', orderId, {
   limit: 100,
   activityType: 'order_updated' // Optional: filter by activity type
@@ -332,10 +334,12 @@ activityEvents.on('activity:before-log', (activity) => {
   };
 });
 
-// Handle errors
+// Handle errors with centralized error handling
 activityEvents.on('activity:error', (error, activity) => {
   console.error('Activity logging failed:', error);
-  // Log to external service, retry, etc.
+  // Integration examples:
+  myLogger.error('Activity error', { err: error, activity });
+  // External service retry, monitoring, etc.
 });
 ```
 
@@ -686,12 +690,12 @@ The plugin temporarily stores field values on documents for change detection. Fo
 
 ### 1. Selective Field Tracking
 ```typescript
-// ✅ Good: Track only essential fields
+// Good: Track only essential fields
 schema.plugin(activityPlugin, {
   trackedFields: ['status', 'priority', 'assignee'] // Small, important fields
 });
 
-// ❌ Avoid: Tracking large objects or frequent-change fields
+// Avoid: Tracking large objects or frequent-change fields
 schema.plugin(activityPlugin, {
   trackedFields: ['content', 'metadata', 'lastSeen'] // Large/frequent data
 });
@@ -722,7 +726,7 @@ schema.plugin(activityPlugin, {
 // Memory is reclaimed when documents are garbage collected
 // For long-running applications processing many documents:
 
-// ✅ Good: Process documents in batches
+// Good: Process documents in batches
 async function updateUserStatuses(userIds: string[]) {
   for (let i = 0; i < userIds.length; i += 100) {
     const batch = userIds.slice(i, i + 100);
@@ -736,7 +740,7 @@ async function updateUserStatuses(userIds: string[]) {
   }
 }
 
-// ❌ Avoid: Loading many documents simultaneously
+// Avoid: Loading many documents simultaneously
 const allUsers = await User.find({}); // All documents in memory
 // Each document stores __initialState, __originalValues, etc.
 ```
@@ -799,11 +803,11 @@ npm run build
 npm run dev
 ```
 
-The package includes comprehensive Jest tests with **82.9% code coverage** and MongoDB Memory Server for isolated testing.
+The package includes comprehensive Jest tests with **91.93% code coverage** and MongoDB Memory Server for isolated testing.
 
 ## 🧩 Compatibility
 
-- **Node.js**: 14+ (ES2020+ features)
+- **Node.js**: 16+ (matches engines field in package.json)
 - **MongoDB**: 4.0+ (for TTL and indexes)
 - **Mongoose**: 6.0+ (for TypeScript support)
 - **TypeScript**: 4.0+ (full type support)
