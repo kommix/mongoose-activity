@@ -43,7 +43,10 @@ export class MetaBuilder {
   /**
    * Build metadata for document creation
    */
-  static forCreate(fields: string[], fieldValues?: Record<string, any>): CreateMetadata {
+  static forCreate(
+    fields: string[],
+    fieldValues?: Record<string, any>
+  ): CreateMetadata {
     return {
       operation: 'create',
       timestamp: new Date(),
@@ -65,7 +68,13 @@ export class MetaBuilder {
       filter?: Record<string, any>;
     } = {}
   ): UpdateMetadata {
-    const { changes, currentValues, updateType = 'document', queryOperation, filter } = options;
+    const {
+      changes,
+      currentValues,
+      updateType = 'document',
+      queryOperation,
+      filter,
+    } = options;
 
     return {
       operation: 'update',
@@ -92,7 +101,12 @@ export class MetaBuilder {
       fields?: string[];
     } = {}
   ): DeleteMetadata {
-    const { deletedCount = 1, deletedFields, deletedDocument, fields } = options;
+    const {
+      deletedCount = 1,
+      deletedFields,
+      deletedDocument,
+      fields,
+    } = options;
 
     return {
       operation: 'delete',
@@ -133,7 +147,10 @@ export class MetaBuilder {
   /**
    * Add context information to any metadata object
    */
-  static withContext<T extends BaseMetadata>(metadata: T, context: Record<string, any>): T {
+  static withContext<T extends BaseMetadata>(
+    metadata: T,
+    context: Record<string, any>
+  ): T {
     return {
       ...metadata,
       context: {

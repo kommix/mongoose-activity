@@ -18,7 +18,8 @@ export class ActivityErrorHandler {
     console.warn(fullMessage, error);
 
     // Emit error event for programmatic handling
-    const errorObj = error instanceof Error ? error : new Error(String(error || message));
+    const errorObj =
+      error instanceof Error ? error : new Error(String(error || message));
     activityEvents.emit('activity:error', errorObj, context);
   }
 
@@ -54,11 +55,7 @@ export class ActivityErrorHandler {
    * @param error Error object
    * @param context Optional context data
    */
-  static logHookError(
-    operation: string,
-    error: unknown,
-    context?: any
-  ): void {
+  static logHookError(operation: string, error: unknown, context?: any): void {
     this.logError(`Error in ${operation} hook:`, error, context);
   }
 

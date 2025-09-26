@@ -4,5 +4,5 @@ export {
   BaseMetadata,
   CreateMetadata,
   UpdateMetadata,
-  DeleteMetadata
+  DeleteMetadata,
 } from './meta-builder';

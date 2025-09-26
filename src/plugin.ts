@@ -165,18 +165,19 @@ export function activityPlugin<T extends Document>(
                 id: doc._id as Types.ObjectId,
               },
               type: `${collectionName}_created`,
-              meta: trackedFields.length > 0
-                ? MetaBuilder.forCreate(
-                    trackedFields,
-                    trackedFields.reduce(
-                      (acc, field) => {
-                        acc[field] = doc.get(field);
-                        return acc;
-                      },
-                      {} as Record<string, any>
+              meta:
+                trackedFields.length > 0
+                  ? MetaBuilder.forCreate(
+                      trackedFields,
+                      trackedFields.reduce(
+                        (acc, field) => {
+                          acc[field] = doc.get(field);
+                          return acc;
+                        },
+                        {} as Record<string, any>
+                      )
                     )
-                  )
-                : MetaBuilder.forCreate([]),
+                  : MetaBuilder.forCreate([]),
             },
             { throwOnError, session }
           );
@@ -200,7 +201,7 @@ export function activityPlugin<T extends Document>(
 
             meta = MetaBuilder.forUpdate(modifiedFields, {
               changes,
-              updateType: 'document'
+              updateType: 'document',
             });
           } else {
             // When not tracking original values, just include current values
@@ -211,7 +212,7 @@ export function activityPlugin<T extends Document>(
 
             meta = MetaBuilder.forUpdate(modifiedFields, {
               currentValues,
-              updateType: 'document'
+              updateType: 'document',
             });
           }
 
@@ -254,7 +255,11 @@ export function activityPlugin<T extends Document>(
         const update = (this as any).__update;
 
         // Only proceed if we have relevant updates and valid filter
-        if (update && trackedFields.length > 0 && (filter._id || Object.keys(filter).length > 0)) {
+        if (
+          update &&
+          trackedFields.length > 0 &&
+          (filter._id || Object.keys(filter).length > 0)
+        ) {
           const updateKeys = Object.keys(update.$set || update);
           const updatedFields = getRelevantTrackedFields(
             updateKeys,
@@ -290,7 +295,8 @@ export function activityPlugin<T extends Document>(
                     meta: MetaBuilder.forUpdate(updatedFields, {
                       updateType: 'bulk',
                       queryOperation: 'updateMany',
-                      filter: Object.keys(filter).length > 0 ? filter : undefined,
+                      filter:
+                        Object.keys(filter).length > 0 ? filter : undefined,
                     }),
                   },
                   { throwOnError, session }
@@ -302,7 +308,8 @@ export function activityPlugin<T extends Document>(
                     userId: userId as Types.ObjectId,
                     entity: {
                       type: collectionName,
-                      id: (filter._id as Types.ObjectId) || new Types.ObjectId(),
+                      id:
+                        (filter._id as Types.ObjectId) || new Types.ObjectId(),
                     },
                     type: activityType,
                     meta: MetaBuilder.forUpdate(updatedFields, {
@@ -358,16 +365,22 @@ export function activityPlugin<T extends Document>(
 
           if (userId) {
             // Prepare metadata with selected fields
-            const deletedFields = deletionFields.length > 0 ?
-              deletionFields.reduce((acc, field) => {
-                acc[field] = deletedDoc[field];
-                return acc;
-              }, {} as Record<string, any>) : undefined;
+            const deletedFields =
+              deletionFields.length > 0
+                ? deletionFields.reduce(
+                    (acc, field) => {
+                      acc[field] = deletedDoc[field];
+                      return acc;
+                    },
+                    {} as Record<string, any>
+                  )
+                : undefined;
 
             const meta = MetaBuilder.forDelete('deleteOne', {
               deletedCount: result.deletedCount,
               deletedFields,
-              deletedDocument: deletionFields.length === 0 ? deletedDoc : undefined,
+              deletedDocument:
+                deletionFields.length === 0 ? deletedDoc : undefined,
               fields: deletionFields.length > 0 ? deletionFields : undefined,
             });
 
@@ -436,7 +449,8 @@ export function activityPlugin<T extends Document>(
 
             if (finalUserId) {
               // Build sample field data for bulk operations
-              const deletedFieldsSample: Record<string, any[]> | undefined = deletionFields.length > 0 ? {} : undefined;
+              const deletedFieldsSample: Record<string, any[]> | undefined =
+                deletionFields.length > 0 ? {} : undefined;
               if (deletedFieldsSample) {
                 deletionFields.forEach((field) => {
                   // Include first 5 values as a sample
@@ -451,7 +465,7 @@ export function activityPlugin<T extends Document>(
               }
 
               const meta = MetaBuilder.forBulkDelete(result.deletedCount, {
-                documentIds: deletedDocs.map((doc: any) => doc._id.toString()),
+                documentIds: deletedDocs.map((doc: any) => (doc._id as { toString(): string }).toString()),
                 deletedFieldsSample,
                 fields: deletionFields.length > 0 ? deletionFields : undefined,
               });
@@ -482,21 +496,29 @@ export function activityPlugin<T extends Document>(
 
               if (userId) {
                 // Prepare metadata
-                const deletedFields = deletionFields.length > 0 ?
-                  deletionFields.reduce((acc, field) => {
-                    acc[field] = deletedDoc[field];
-                    return acc;
-                  }, {} as Record<string, any>) : undefined;
+                const deletedFields =
+                  deletionFields.length > 0
+                    ? deletionFields.reduce(
+                        (acc, field) => {
+                          acc[field] = deletedDoc[field];
+                          return acc;
+                        },
+                        {} as Record<string, any>
+                      )
+                    : undefined;
 
                 const meta = MetaBuilder.forDelete('deleteMany', {
                   deletedCount: result.deletedCount,
                   deletedFields,
-                  deletedDocument: deletionFields.length === 0 ? deletedDoc : undefined,
-                  fields: deletionFields.length > 0 ? deletionFields : undefined,
+                  deletedDocument:
+                    deletionFields.length === 0 ? deletedDoc : undefined,
+                  fields:
+                    deletionFields.length > 0 ? deletionFields : undefined,
                 });
 
                 // Extract session from query context for transaction support (shared across all docs in batch)
-                const session = (this as any).getOptions?.().session || undefined;
+                const session =
+                  (this as any).getOptions?.().session || undefined;
 
                 await logActivity(
                   {
@@ -553,16 +575,25 @@ export function activityPlugin<T extends Document>(
 
           if (userId) {
             // Prepare metadata
-            const deletedFields = deletionFields.length > 0 ?
-              deletionFields.reduce((acc, field) => {
-                acc[field] = deletedDoc[field];
-                return acc;
-              }, {} as Record<string, any>) : undefined;
+            const deletedFields =
+              deletionFields.length > 0
+                ? deletionFields.reduce(
+                    (acc, field) => {
+                      acc[field] = deletedDoc[field];
+                      return acc;
+                    },
+                    {} as Record<string, any>
+                  )
+                : undefined;
 
             const meta = MetaBuilder.forDelete('findOneAndDelete', {
               deletedFields,
-              deletedDocument: deletionFields.length === 0 ?
-                (deletedDoc.toObject ? deletedDoc.toObject() : deletedDoc) : undefined,
+              deletedDocument:
+                deletionFields.length === 0
+                  ? deletedDoc.toObject
+                    ? deletedDoc.toObject()
+                    : deletedDoc
+                  : undefined,
               fields: deletionFields.length > 0 ? deletionFields : undefined,
             });
 

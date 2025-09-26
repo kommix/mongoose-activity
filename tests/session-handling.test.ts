@@ -9,19 +9,22 @@ import {
 } from '../src';
 
 // Test schema with plugin
-const UserSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true },
-  userId: { type: mongoose.Schema.Types.ObjectId, required: true }
-}, {
-  collection: 'users' // Explicitly set collection name
-});
+const UserSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, required: true },
+  },
+  {
+    collection: 'users', // Explicitly set collection name
+  }
+);
 
 UserSchema.plugin(activityPlugin, {
   trackedFields: ['name', 'email'],
   trackDeletions: true,
   deletionFields: ['name', 'email'],
-  collectionName: 'User' // Override collection name for activity logging
+  collectionName: 'User', // Override collection name for activity logging
 });
 
 describe('Session Handling', () => {
@@ -69,7 +72,7 @@ describe('Session Handling', () => {
         const user = new User({
           name: 'John Doe',
           email: 'john@example.com',
-          userId
+          userId,
         });
 
         // Save with session (Note: MongoDB Memory Server doesn't support transactions,
@@ -80,10 +83,10 @@ describe('Session Handling', () => {
         expect(logActivitySpy).toHaveBeenCalledWith(
           expect.objectContaining({
             userId,
-            type: 'User_created'
+            type: 'User_created',
           }),
           expect.objectContaining({
-            throwOnError: false
+            throwOnError: false,
           })
         );
 
@@ -106,7 +109,7 @@ describe('Session Handling', () => {
         const user = new User({
           name: 'John Doe',
           email: 'john@example.com',
-          userId
+          userId,
         });
         await user.save();
 
@@ -121,10 +124,10 @@ describe('Session Handling', () => {
         expect(logActivitySpy).toHaveBeenCalledWith(
           expect.objectContaining({
             userId,
-            type: 'document_updated'
+            type: 'document_updated',
           }),
           expect.objectContaining({
-            throwOnError: false
+            throwOnError: false,
           })
         );
 
@@ -149,7 +152,7 @@ describe('Session Handling', () => {
         const user = new User({
           name: 'John Doe',
           email: 'john@example.com',
-          userId
+          userId,
         });
         await user.save();
 
@@ -166,10 +169,10 @@ describe('Session Handling', () => {
         expect(logActivitySpy).toHaveBeenCalledWith(
           expect.objectContaining({
             userId,
-            type: 'document_updated'
+            type: 'document_updated',
           }),
           expect.objectContaining({
-            throwOnError: false
+            throwOnError: false,
           })
         );
 
@@ -192,7 +195,7 @@ describe('Session Handling', () => {
         const user = new User({
           name: 'John Doe',
           email: 'john@example.com',
-          userId
+          userId,
         });
         await user.save();
 
@@ -205,10 +208,10 @@ describe('Session Handling', () => {
         expect(logActivitySpy).toHaveBeenCalledWith(
           expect.objectContaining({
             userId,
-            type: 'User_deleted'
+            type: 'User_deleted',
           }),
           expect.objectContaining({
-            throwOnError: false
+            throwOnError: false,
           })
         );
 
@@ -231,7 +234,7 @@ describe('Session Handling', () => {
         const user = new User({
           name: 'John Doe',
           email: 'john@example.com',
-          userId
+          userId,
         });
         await user.save();
 
@@ -244,10 +247,10 @@ describe('Session Handling', () => {
         expect(logActivitySpy).toHaveBeenCalledWith(
           expect.objectContaining({
             userId,
-            type: 'User_deleted'
+            type: 'User_deleted',
           }),
           expect.objectContaining({
-            throwOnError: false
+            throwOnError: false,
           })
         );
 
@@ -274,7 +277,7 @@ describe('Session Handling', () => {
           {
             userId,
             entity: { type: 'test', id: entityId },
-            type: 'test_action'
+            type: 'test_action',
           },
           { session }
         );
@@ -297,7 +300,7 @@ describe('Session Handling', () => {
       await logActivity({
         userId,
         entity: { type: 'test', id: entityId },
-        type: 'test_action_no_session'
+        type: 'test_action_no_session',
       });
 
       // Verify activity was saved

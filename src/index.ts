@@ -28,5 +28,5 @@ export {
   BaseMetadata,
   CreateMetadata,
   UpdateMetadata,
-  DeleteMetadata
+  DeleteMetadata,
 } from './utils';

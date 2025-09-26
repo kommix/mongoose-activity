@@ -37,12 +37,12 @@ describe('Edge Cases', () => {
       const TestSchema = new mongoose.Schema({
         name: String,
         value: Number,
-        userId: { type: mongoose.Schema.Types.ObjectId, required: true }
+        userId: { type: mongoose.Schema.Types.ObjectId, required: true },
       });
 
       TestSchema.plugin(activityPlugin, {
         trackedFields: [], // Empty array
-        collectionName: 'Test'
+        collectionName: 'Test',
       });
 
       const TestModel = mongoose.model('Test', TestSchema);
@@ -51,7 +51,7 @@ describe('Edge Cases', () => {
       const doc = new TestModel({
         name: 'test',
         value: 42,
-        userId
+        userId,
       });
 
       await doc.save();
@@ -66,11 +66,11 @@ describe('Edge Cases', () => {
     it('should handle plugin with no trackedFields option', async () => {
       const TestSchema = new mongoose.Schema({
         name: String,
-        userId: { type: mongoose.Schema.Types.ObjectId, required: true }
+        userId: { type: mongoose.Schema.Types.ObjectId, required: true },
       });
 
       TestSchema.plugin(activityPlugin, {
-        collectionName: 'Test'
+        collectionName: 'Test',
         // No trackedFields specified, should default to empty array
       });
 
@@ -79,7 +79,7 @@ describe('Edge Cases', () => {
 
       const doc = new TestModel({
         name: 'test',
-        userId
+        userId,
       });
 
       await doc.save();
@@ -95,13 +95,13 @@ describe('Edge Cases', () => {
       const TestSchema = new mongoose.Schema({
         name: String,
         optional: String,
-        userId: { type: mongoose.Schema.Types.ObjectId, required: true }
+        userId: { type: mongoose.Schema.Types.ObjectId, required: true },
       });
 
       TestSchema.plugin(activityPlugin, {
         trackedFields: ['name', 'optional'],
         trackOriginalValues: true,
-        collectionName: 'Test'
+        collectionName: 'Test',
       });
 
       const TestModel = mongoose.model('TestNull', TestSchema);
@@ -111,7 +111,7 @@ describe('Edge Cases', () => {
       const doc = new TestModel({
         name: 'test',
         optional: null,
-        userId
+        userId,
       });
 
       await doc.save();
@@ -144,13 +144,13 @@ describe('Edge Cases', () => {
       const TestSchema = new mongoose.Schema({
         name: String,
         optional: String,
-        userId: { type: mongoose.Schema.Types.ObjectId, required: true }
+        userId: { type: mongoose.Schema.Types.ObjectId, required: true },
       });
 
       TestSchema.plugin(activityPlugin, {
         trackedFields: ['name', 'optional'],
         trackOriginalValues: true,
-        collectionName: 'Test'
+        collectionName: 'Test',
       });
 
       const TestModel = mongoose.model('TestUndefined', TestSchema);
@@ -160,7 +160,7 @@ describe('Edge Cases', () => {
       const doc = new TestModel({
         name: 'test',
         // optional is undefined
-        userId
+        userId,
       });
 
       await doc.save();
@@ -176,13 +176,13 @@ describe('Edge Cases', () => {
       const TestSchema = new mongoose.Schema({
         name: String,
         largeText: String,
-        userId: { type: mongoose.Schema.Types.ObjectId, required: true }
+        userId: { type: mongoose.Schema.Types.ObjectId, required: true },
       });
 
       TestSchema.plugin(activityPlugin, {
         trackedFields: ['name', 'largeText'],
         trackOriginalValues: true,
-        collectionName: 'Test'
+        collectionName: 'Test',
       });
 
       const TestModel = mongoose.model('TestLarge', TestSchema);
@@ -193,7 +193,7 @@ describe('Edge Cases', () => {
       const doc = new TestModel({
         name: 'test',
         largeText: largeString,
-        userId
+        userId,
       });
 
       await doc.save();
@@ -209,13 +209,13 @@ describe('Edge Cases', () => {
         name: String,
         tags: [String],
         numbers: [Number],
-        userId: { type: mongoose.Schema.Types.ObjectId, required: true }
+        userId: { type: mongoose.Schema.Types.ObjectId, required: true },
       });
 
       TestSchema.plugin(activityPlugin, {
         trackedFields: ['name', 'tags', 'numbers'],
         trackOriginalValues: true,
-        collectionName: 'Test'
+        collectionName: 'Test',
       });
 
       const TestModel = mongoose.model('TestArray', TestSchema);
@@ -225,7 +225,7 @@ describe('Edge Cases', () => {
         name: 'test',
         tags: ['tag1', 'tag2', 'tag3'],
         numbers: [1, 2, 3, 4, 5],
-        userId
+        userId,
       });
 
       await doc.save();
@@ -234,10 +234,18 @@ describe('Edge Cases', () => {
       expect(activities1).toHaveLength(1);
 
       // For creation activity, check that arrays were captured
-      expect(Array.isArray(activities1[0].meta?.initialValues?.tags)).toBe(true);
-      expect(Array.isArray(activities1[0].meta?.initialValues?.numbers)).toBe(true);
-      expect(activities1[0].meta?.initialValues?.tags.length).toBeGreaterThan(0);
-      expect(activities1[0].meta?.initialValues?.numbers.length).toBeGreaterThan(0);
+      expect(Array.isArray(activities1[0].meta?.initialValues?.tags)).toBe(
+        true
+      );
+      expect(Array.isArray(activities1[0].meta?.initialValues?.numbers)).toBe(
+        true
+      );
+      expect(activities1[0].meta?.initialValues?.tags.length).toBeGreaterThan(
+        0
+      );
+      expect(
+        activities1[0].meta?.initialValues?.numbers.length
+      ).toBeGreaterThan(0);
 
       // Update by replacing arrays (not modifying in place)
       doc.tags = ['tag1', 'tag2', 'tag3', 'tag4'];
@@ -260,16 +268,21 @@ describe('Edge Cases', () => {
           avatar: String,
           settings: {
             theme: String,
-            notifications: Boolean
-          }
+            notifications: Boolean,
+          },
         },
-        userId: { type: mongoose.Schema.Types.ObjectId, required: true }
+        userId: { type: mongoose.Schema.Types.ObjectId, required: true },
       });
 
       TestSchema.plugin(activityPlugin, {
-        trackedFields: ['name', 'profile.bio', 'profile.avatar', 'profile.settings.theme'],
+        trackedFields: [
+          'name',
+          'profile.bio',
+          'profile.avatar',
+          'profile.settings.theme',
+        ],
         trackOriginalValues: true,
-        collectionName: 'Test'
+        collectionName: 'Test',
       });
 
       const TestModel = mongoose.model('TestNested', TestSchema);
@@ -282,18 +295,22 @@ describe('Edge Cases', () => {
           avatar: 'avatar.jpg',
           settings: {
             theme: 'dark',
-            notifications: true
-          }
+            notifications: true,
+          },
         },
-        userId
+        userId,
       });
 
       await doc.save();
 
       const activities = await Activity.find({});
       expect(activities).toHaveLength(1);
-      expect(activities[0].meta?.initialValues?.['profile.bio']).toBe('Hello world');
-      expect(activities[0].meta?.initialValues?.['profile.settings.theme']).toBe('dark');
+      expect(activities[0].meta?.initialValues?.['profile.bio']).toBe(
+        'Hello world'
+      );
+      expect(
+        activities[0].meta?.initialValues?.['profile.settings.theme']
+      ).toBe('dark');
     });
   });
 
@@ -302,12 +319,12 @@ describe('Edge Cases', () => {
       const TestSchema = new mongoose.Schema({
         name: String,
         counter: { type: Number, default: 0 },
-        userId: { type: mongoose.Schema.Types.ObjectId, required: true }
+        userId: { type: mongoose.Schema.Types.ObjectId, required: true },
       });
 
       TestSchema.plugin(activityPlugin, {
         trackedFields: ['counter'],
-        collectionName: 'Test'
+        collectionName: 'Test',
       });
 
       const TestModel = mongoose.model('TestConcurrent', TestSchema);
@@ -317,20 +334,22 @@ describe('Edge Cases', () => {
       const doc = new TestModel({
         name: 'test',
         counter: 0,
-        userId
+        userId,
       });
       await doc.save();
 
       // Simulate concurrent updates
       const promises = [];
       for (let i = 1; i <= 5; i++) {
-        promises.push((async () => {
-          const freshDoc = await TestModel.findById(doc._id);
-          if (freshDoc) {
-            freshDoc.counter = i * 10;
-            await freshDoc.save();
-          }
-        })());
+        promises.push(
+          (async () => {
+            const freshDoc = await TestModel.findById(doc._id);
+            if (freshDoc) {
+              freshDoc.counter = i * 10;
+              await freshDoc.save();
+            }
+          })()
+        );
       }
 
       await Promise.all(promises);
@@ -352,13 +371,13 @@ describe('Edge Cases', () => {
       const TestSchema = new mongoose.Schema({
         name: String,
         data: String,
-        userId: { type: mongoose.Schema.Types.ObjectId, required: true }
+        userId: { type: mongoose.Schema.Types.ObjectId, required: true },
       });
 
       TestSchema.plugin(activityPlugin, {
         trackedFields: ['name', 'data'],
         trackOriginalValues: true,
-        collectionName: 'Test'
+        collectionName: 'Test',
       });
 
       const TestModel = mongoose.model('TestMemory', TestSchema);
@@ -370,7 +389,7 @@ describe('Edge Cases', () => {
         const doc = new TestModel({
           name: `doc-${i}`,
           data: `data-${i}`.repeat(100), // Make it somewhat large
-          userId
+          userId,
         });
         docs.push(doc.save());
       }
@@ -393,13 +412,13 @@ describe('Edge Cases', () => {
       const TestSchema = new mongoose.Schema({
         name: String,
         value: Number,
-        userId: { type: mongoose.Schema.Types.ObjectId, required: true }
+        userId: { type: mongoose.Schema.Types.ObjectId, required: true },
       });
 
       TestSchema.plugin(activityPlugin, {
         trackedFields: ['value'],
         trackOriginalValues: true,
-        collectionName: 'Test'
+        collectionName: 'Test',
       });
 
       const TestModel = mongoose.model('TestMemoryUpdate', TestSchema);
@@ -408,7 +427,7 @@ describe('Edge Cases', () => {
       const doc = new TestModel({
         name: 'test',
         value: 0,
-        userId
+        userId,
       });
       await doc.save();
 
@@ -433,13 +452,13 @@ describe('Edge Cases', () => {
     it('should continue working after activity logging fails', async () => {
       const TestSchema = new mongoose.Schema({
         name: String,
-        userId: { type: mongoose.Schema.Types.ObjectId, required: true }
+        userId: { type: mongoose.Schema.Types.ObjectId, required: true },
       });
 
       TestSchema.plugin(activityPlugin, {
         trackedFields: ['name'],
         throwOnError: false, // Don't throw on activity errors
-        collectionName: 'Test'
+        collectionName: 'Test',
       });
 
       const TestModel = mongoose.model('TestErrorRecovery', TestSchema);
@@ -448,18 +467,20 @@ describe('Edge Cases', () => {
       // First document should work normally
       const doc1 = new TestModel({
         name: 'test1',
-        userId
+        userId,
       });
       await doc1.save();
 
       // Simulate activity logging failure by temporarily breaking the connection
       const originalSave = Activity.prototype.save;
-      Activity.prototype.save = jest.fn().mockRejectedValue(new Error('Database error'));
+      Activity.prototype.save = jest
+        .fn()
+        .mockRejectedValue(new Error('Database error'));
 
       // This should not throw due to throwOnError: false
       const doc2 = new TestModel({
         name: 'test2',
-        userId
+        userId,
       });
       await expect(doc2.save()).resolves.not.toThrow();
 
@@ -469,7 +490,7 @@ describe('Edge Cases', () => {
       // This should work again
       const doc3 = new TestModel({
         name: 'test3',
-        userId
+        userId,
       });
       await doc3.save();
 
@@ -488,14 +509,14 @@ describe('Edge Cases', () => {
 
       TestSchema.plugin(activityPlugin, {
         trackedFields: ['name'],
-        collectionName: 'Test'
+        collectionName: 'Test',
       });
 
       const TestModel = mongoose.model('TestNoContext', TestSchema);
 
       // Create document without userId or context
       const doc = new TestModel({
-        name: 'test'
+        name: 'test',
       });
 
       // Should save but not create activity due to missing userId
@@ -511,13 +532,13 @@ describe('Edge Cases', () => {
       const TestSchema = new mongoose.Schema({
         name: String,
         relatedId: mongoose.Schema.Types.ObjectId,
-        userId: { type: mongoose.Schema.Types.ObjectId, required: true }
+        userId: { type: mongoose.Schema.Types.ObjectId, required: true },
       });
 
       TestSchema.plugin(activityPlugin, {
         trackedFields: ['name', 'relatedId'],
         trackOriginalValues: true,
-        collectionName: 'Test'
+        collectionName: 'Test',
       });
 
       const TestModel = mongoose.model('TestObjectId', TestSchema);
@@ -528,7 +549,7 @@ describe('Edge Cases', () => {
       const doc = new TestModel({
         name: 'test',
         relatedId: relatedId1,
-        userId
+        userId,
       });
       await doc.save();
 
@@ -540,9 +561,15 @@ describe('Edge Cases', () => {
       expect(activities).toHaveLength(2);
 
       // Check ObjectId serialization in activities
-      expect(activities[0].meta?.initialValues?.relatedId.toString()).toBe(relatedId1.toString());
-      expect(activities[1].meta?.changes?.relatedId?.from.toString()).toBe(relatedId1.toString());
-      expect(activities[1].meta?.changes?.relatedId?.to.toString()).toBe(relatedId2.toString());
+      expect(activities[0].meta?.initialValues?.relatedId.toString()).toBe(
+        relatedId1.toString()
+      );
+      expect(activities[1].meta?.changes?.relatedId?.from.toString()).toBe(
+        relatedId1.toString()
+      );
+      expect(activities[1].meta?.changes?.relatedId?.to.toString()).toBe(
+        relatedId2.toString()
+      );
     });
   });
 });

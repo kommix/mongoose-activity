@@ -28,7 +28,11 @@ describe('ActivityErrorHandler', () => {
         '[mongoose-activity] Something went wrong',
         error
       );
-      expect(eventEmitSpy).toHaveBeenCalledWith('activity:error', error, context);
+      expect(eventEmitSpy).toHaveBeenCalledWith(
+        'activity:error',
+        error,
+        context
+      );
     });
 
     it('should create error object when none provided', () => {
@@ -65,7 +69,9 @@ describe('ActivityErrorHandler', () => {
     it('should log warning in development mode', () => {
       process.env.NODE_ENV = 'development';
 
-      ActivityErrorHandler.logDevelopmentWarning('Dev warning', { detail: 'test' });
+      ActivityErrorHandler.logDevelopmentWarning('Dev warning', {
+        detail: 'test',
+      });
 
       expect(consoleWarnSpy).toHaveBeenCalledWith(
         '[mongoose-activity] Dev warning',
@@ -97,16 +103,24 @@ describe('ActivityErrorHandler', () => {
       const params = {
         userId: 'user123',
         entity: { type: 'post', id: 'post123' },
-        type: 'post_created'
+        type: 'post_created',
       } as any;
 
-      ActivityErrorHandler.logActivityError('Activity logging failed', error, params);
+      ActivityErrorHandler.logActivityError(
+        'Activity logging failed',
+        error,
+        params
+      );
 
       expect(consoleWarnSpy).toHaveBeenCalledWith(
         '[mongoose-activity] Activity logging failed',
         error
       );
-      expect(eventEmitSpy).toHaveBeenCalledWith('activity:error', error, params);
+      expect(eventEmitSpy).toHaveBeenCalledWith(
+        'activity:error',
+        error,
+        params
+      );
     });
   });
 
@@ -121,7 +135,11 @@ describe('ActivityErrorHandler', () => {
         '[mongoose-activity] Error in post save hook:',
         error
       );
-      expect(eventEmitSpy).toHaveBeenCalledWith('activity:error', error, context);
+      expect(eventEmitSpy).toHaveBeenCalledWith(
+        'activity:error',
+        error,
+        context
+      );
     });
   });
 

@@ -105,7 +105,11 @@ export async function logActivity(
     }
   } catch (error) {
     // Use centralized error handler
-    ActivityErrorHandler.logActivityError('Failed to log activity:', error, params);
+    ActivityErrorHandler.logActivityError(
+      'Failed to log activity:',
+      error,
+      params
+    );
 
     // Optionally throw error if configured to do so
     if (throwOnError) {

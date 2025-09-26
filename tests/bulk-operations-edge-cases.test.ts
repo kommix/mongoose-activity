@@ -35,7 +35,7 @@ describe('Bulk Operations Edge Cases', () => {
     it('should switch to summary mode at exact threshold', async () => {
       const TestSchema = new mongoose.Schema({
         name: String,
-        userId: { type: mongoose.Schema.Types.ObjectId, required: true }
+        userId: { type: mongoose.Schema.Types.ObjectId, required: true },
       });
 
       TestSchema.plugin(activityPlugin, {
@@ -43,7 +43,7 @@ describe('Bulk Operations Edge Cases', () => {
         trackDeletions: true,
         deletionFields: ['name'],
         bulkDeleteThreshold: 3, // Low threshold for testing
-        collectionName: 'Test'
+        collectionName: 'Test',
       });
 
       const TestModel = mongoose.model('TestThreshold', TestSchema);
@@ -52,13 +52,15 @@ describe('Bulk Operations Edge Cases', () => {
       // Create exactly threshold number of documents
       const docs = [];
       for (let i = 0; i < 3; i++) {
-        docs.push(new TestModel({
-          name: `doc-${i}`,
-          userId
-        }));
+        docs.push(
+          new TestModel({
+            name: `doc-${i}`,
+            userId,
+          })
+        );
       }
 
-      await Promise.all(docs.map(doc => doc.save()));
+      await Promise.all(docs.map((doc) => doc.save()));
 
       // Clear creation activities
       await Activity.deleteMany({});
@@ -76,7 +78,7 @@ describe('Bulk Operations Edge Cases', () => {
     it('should use individual mode below threshold', async () => {
       const TestSchema = new mongoose.Schema({
         name: String,
-        userId: { type: mongoose.Schema.Types.ObjectId, required: true }
+        userId: { type: mongoose.Schema.Types.ObjectId, required: true },
       });
 
       TestSchema.plugin(activityPlugin, {
@@ -84,7 +86,7 @@ describe('Bulk Operations Edge Cases', () => {
         trackDeletions: true,
         deletionFields: ['name'],
         bulkDeleteThreshold: 3, // Low threshold for testing
-        collectionName: 'Test'
+        collectionName: 'Test',
       });
 
       const TestModel = mongoose.model('TestBelowThreshold', TestSchema);
@@ -93,13 +95,15 @@ describe('Bulk Operations Edge Cases', () => {
       // Create fewer than threshold documents
       const docs = [];
       for (let i = 0; i < 2; i++) {
-        docs.push(new TestModel({
-          name: `doc-${i}`,
-          userId
-        }));
+        docs.push(
+          new TestModel({
+            name: `doc-${i}`,
+            userId,
+          })
+        );
       }
 
-      await Promise.all(docs.map(doc => doc.save()));
+      await Promise.all(docs.map((doc) => doc.save()));
 
       // Clear creation activities
       await Activity.deleteMany({});
@@ -109,7 +113,7 @@ describe('Bulk Operations Edge Cases', () => {
 
       const activities = await Activity.find({});
       expect(activities).toHaveLength(2); // Individual activity per document
-      activities.forEach(activity => {
+      activities.forEach((activity) => {
         expect(activity.type).toBe('Test_deleted');
       });
     });
@@ -117,7 +121,7 @@ describe('Bulk Operations Edge Cases', () => {
     it('should respect bulkDeleteSummary override', async () => {
       const TestSchema = new mongoose.Schema({
         name: String,
-        userId: { type: mongoose.Schema.Types.ObjectId, required: true }
+        userId: { type: mongoose.Schema.Types.ObjectId, required: true },
       });
 
       TestSchema.plugin(activityPlugin, {
@@ -126,7 +130,7 @@ describe('Bulk Operations Edge Cases', () => {
         deletionFields: ['name'],
         bulkDeleteSummary: true, // Force summary mode
         bulkDeleteThreshold: 100, // High threshold
-        collectionName: 'Test'
+        collectionName: 'Test',
       });
 
       const TestModel = mongoose.model('TestForceSummary', TestSchema);
@@ -135,13 +139,15 @@ describe('Bulk Operations Edge Cases', () => {
       // Create only 2 documents (way below threshold)
       const docs = [];
       for (let i = 0; i < 2; i++) {
-        docs.push(new TestModel({
-          name: `doc-${i}`,
-          userId
-        }));
+        docs.push(
+          new TestModel({
+            name: `doc-${i}`,
+            userId,
+          })
+        );
       }
 
-      await Promise.all(docs.map(doc => doc.save()));
+      await Promise.all(docs.map((doc) => doc.save()));
 
       // Clear creation activities
       await Activity.deleteMany({});
@@ -167,7 +173,7 @@ describe('Bulk Operations Edge Cases', () => {
         trackedFields: ['name'],
         trackDeletions: true,
         deletionFields: ['name'],
-        collectionName: 'Test'
+        collectionName: 'Test',
       });
 
       const TestModel = mongoose.model('TestNoUserId', TestSchema);
@@ -175,12 +181,14 @@ describe('Bulk Operations Edge Cases', () => {
       // Create documents without userId
       const docs = [];
       for (let i = 0; i < 3; i++) {
-        docs.push(new TestModel({
-          name: `doc-${i}`
-        }));
+        docs.push(
+          new TestModel({
+            name: `doc-${i}`,
+          })
+        );
       }
 
-      await Promise.all(docs.map(doc => doc.save()));
+      await Promise.all(docs.map((doc) => doc.save()));
 
       // Clear creation activities (there shouldn't be any without userId)
       await Activity.deleteMany({});
@@ -195,7 +203,7 @@ describe('Bulk Operations Edge Cases', () => {
     it('should handle deleteMany with mixed userId presence', async () => {
       const TestSchema = new mongoose.Schema({
         name: String,
-        userId: mongoose.Schema.Types.ObjectId // Optional
+        userId: mongoose.Schema.Types.ObjectId, // Optional
       });
 
       TestSchema.plugin(activityPlugin, {
@@ -203,7 +211,7 @@ describe('Bulk Operations Edge Cases', () => {
         trackDeletions: true,
         deletionFields: ['name'],
         bulkDeleteThreshold: 10,
-        collectionName: 'Test'
+        collectionName: 'Test',
       });
 
       const TestModel = mongoose.model('TestMixedUserId', TestSchema);
@@ -212,13 +220,15 @@ describe('Bulk Operations Edge Cases', () => {
       // Create some documents with userId, some without
       const docs = [];
       for (let i = 0; i < 5; i++) {
-        docs.push(new TestModel({
-          name: `doc-${i}`,
-          userId: i < 3 ? userId : undefined // First 3 have userId
-        }));
+        docs.push(
+          new TestModel({
+            name: `doc-${i}`,
+            userId: i < 3 ? userId : undefined, // First 3 have userId
+          })
+        );
       }
 
-      await Promise.all(docs.map(doc => doc.save()));
+      await Promise.all(docs.map((doc) => doc.save()));
 
       // Clear creation activities
       await Activity.deleteMany({});
@@ -229,7 +239,7 @@ describe('Bulk Operations Edge Cases', () => {
       const activities = await Activity.find({});
       // Should only create activities for the 3 documents with userId
       expect(activities).toHaveLength(3);
-      activities.forEach(activity => {
+      activities.forEach((activity) => {
         expect(activity.userId.toString()).toBe(userId.toString());
       });
     });
@@ -239,7 +249,7 @@ describe('Bulk Operations Edge Cases', () => {
     it('should pass session to bulk delete operations', async () => {
       const TestSchema = new mongoose.Schema({
         name: String,
-        userId: { type: mongoose.Schema.Types.ObjectId, required: true }
+        userId: { type: mongoose.Schema.Types.ObjectId, required: true },
       });
 
       TestSchema.plugin(activityPlugin, {
@@ -247,7 +257,7 @@ describe('Bulk Operations Edge Cases', () => {
         trackDeletions: true,
         deletionFields: ['name'],
         bulkDeleteSummary: true,
-        collectionName: 'Test'
+        collectionName: 'Test',
       });
 
       const TestModel = mongoose.model('TestBulkSession', TestSchema);
@@ -256,13 +266,15 @@ describe('Bulk Operations Edge Cases', () => {
       // Create documents
       const docs = [];
       for (let i = 0; i < 3; i++) {
-        docs.push(new TestModel({
-          name: `doc-${i}`,
-          userId
-        }));
+        docs.push(
+          new TestModel({
+            name: `doc-${i}`,
+            userId,
+          })
+        );
       }
 
-      await Promise.all(docs.map(doc => doc.save()));
+      await Promise.all(docs.map((doc) => doc.save()));
 
       // Clear creation activities
       await Activity.deleteMany({});
@@ -288,7 +300,7 @@ describe('Bulk Operations Edge Cases', () => {
       const TestSchema = new mongoose.Schema({
         name: String,
         data: String,
-        userId: { type: mongoose.Schema.Types.ObjectId, required: true }
+        userId: { type: mongoose.Schema.Types.ObjectId, required: true },
       });
 
       TestSchema.plugin(activityPlugin, {
@@ -296,7 +308,7 @@ describe('Bulk Operations Edge Cases', () => {
         trackDeletions: true,
         deletionFields: ['name'], // Only track name to reduce memory
         bulkDeleteSummary: true,
-        collectionName: 'Test'
+        collectionName: 'Test',
       });
 
       const TestModel = mongoose.model('TestLargeBulk', TestSchema);
@@ -305,16 +317,18 @@ describe('Bulk Operations Edge Cases', () => {
       // Create many documents
       const docs = [];
       for (let i = 0; i < 500; i++) {
-        docs.push(new TestModel({
-          name: `doc-${i}`,
-          data: `data-${i}`.repeat(10), // Some data to make it more realistic
-          userId
-        }));
+        docs.push(
+          new TestModel({
+            name: `doc-${i}`,
+            data: `data-${i}`.repeat(10), // Some data to make it more realistic
+            userId,
+          })
+        );
       }
 
       // Save in batches to avoid memory issues
       for (let i = 0; i < docs.length; i += 100) {
-        await Promise.all(docs.slice(i, i + 100).map(doc => doc.save()));
+        await Promise.all(docs.slice(i, i + 100).map((doc) => doc.save()));
       }
 
       // Clear creation activities
@@ -338,7 +352,9 @@ describe('Bulk Operations Edge Cases', () => {
       // Check that sample data is limited (not all 500 documents)
       expect(activities[0].meta?.documentIds?.length).toBe(500);
       if (activities[0].meta?.deletedFieldsSample?.name) {
-        expect(activities[0].meta.deletedFieldsSample.name.length).toBeLessThanOrEqual(5);
+        expect(
+          activities[0].meta.deletedFieldsSample.name.length
+        ).toBeLessThanOrEqual(5);
       }
 
       // Should be reasonably fast (less than 2 seconds for bulk operation)
@@ -350,14 +366,14 @@ describe('Bulk Operations Edge Cases', () => {
     it('should handle deleteMany with no matching documents', async () => {
       const TestSchema = new mongoose.Schema({
         name: String,
-        userId: { type: mongoose.Schema.Types.ObjectId, required: true }
+        userId: { type: mongoose.Schema.Types.ObjectId, required: true },
       });
 
       TestSchema.plugin(activityPlugin, {
         trackedFields: ['name'],
         trackDeletions: true,
         deletionFields: ['name'],
-        collectionName: 'Test'
+        collectionName: 'Test',
       });
 
       const TestModel = mongoose.model('TestEmptyBulk', TestSchema);
@@ -380,7 +396,7 @@ describe('Bulk Operations Edge Cases', () => {
     it('should handle errors during bulk deletion gracefully', async () => {
       const TestSchema = new mongoose.Schema({
         name: String,
-        userId: { type: mongoose.Schema.Types.ObjectId, required: true }
+        userId: { type: mongoose.Schema.Types.ObjectId, required: true },
       });
 
       TestSchema.plugin(activityPlugin, {
@@ -388,7 +404,7 @@ describe('Bulk Operations Edge Cases', () => {
         trackDeletions: true,
         deletionFields: ['name'],
         throwOnError: false,
-        collectionName: 'Test'
+        collectionName: 'Test',
       });
 
       const TestModel = mongoose.model('TestBulkError', TestSchema);
@@ -397,20 +413,24 @@ describe('Bulk Operations Edge Cases', () => {
       // Create documents
       const docs = [];
       for (let i = 0; i < 3; i++) {
-        docs.push(new TestModel({
-          name: `doc-${i}`,
-          userId
-        }));
+        docs.push(
+          new TestModel({
+            name: `doc-${i}`,
+            userId,
+          })
+        );
       }
 
-      await Promise.all(docs.map(doc => doc.save()));
+      await Promise.all(docs.map((doc) => doc.save()));
 
       // Clear creation activities
       await Activity.deleteMany({});
 
       // Mock Activity.save to fail
       const originalSave = Activity.prototype.save;
-      Activity.prototype.save = jest.fn().mockRejectedValue(new Error('Database error'));
+      Activity.prototype.save = jest
+        .fn()
+        .mockRejectedValue(new Error('Database error'));
 
       // Delete should still work even if activity logging fails
       await expect(TestModel.deleteMany({ userId })).resolves.not.toThrow();
@@ -429,12 +449,12 @@ describe('Bulk Operations Edge Cases', () => {
       const TestSchema = new mongoose.Schema({
         name: String,
         status: String,
-        userId: { type: mongoose.Schema.Types.ObjectId, required: true }
+        userId: { type: mongoose.Schema.Types.ObjectId, required: true },
       });
 
       TestSchema.plugin(activityPlugin, {
         trackedFields: ['name', 'status'],
-        collectionName: 'Test'
+        collectionName: 'Test',
       });
 
       const TestModel = mongoose.model('TestUpdateMany', TestSchema);
@@ -443,14 +463,16 @@ describe('Bulk Operations Edge Cases', () => {
       // Create documents
       const docs = [];
       for (let i = 0; i < 3; i++) {
-        docs.push(new TestModel({
-          name: `doc-${i}`,
-          status: 'pending',
-          userId
-        }));
+        docs.push(
+          new TestModel({
+            name: `doc-${i}`,
+            status: 'pending',
+            userId,
+          })
+        );
       }
 
-      await Promise.all(docs.map(doc => doc.save()));
+      await Promise.all(docs.map((doc) => doc.save()));
 
       // Clear creation activities
       await Activity.deleteMany({});

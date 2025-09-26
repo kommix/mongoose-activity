@@ -179,7 +179,9 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
       expect(userCreated.type).toBe('users_created');
       expect(userCreated.entity.type).toBe('users');
       expect(userCreated.meta?.initialValues?.name).toBe('John Doe');
-      expect(userCreated.meta?.initialValues?.['profile.avatar']).toBe('avatar.jpg');
+      expect(userCreated.meta?.initialValues?.['profile.avatar']).toBe(
+        'avatar.jpg'
+      );
 
       // Check manual activity
       const emailVerified = activities[1];

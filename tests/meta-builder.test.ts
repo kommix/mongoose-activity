@@ -50,12 +50,12 @@ describe('MetaBuilder', () => {
       const modifiedFields = ['email', 'profile.avatar'];
       const changes = {
         email: { from: 'old@example.com', to: 'new@example.com' },
-        'profile.avatar': { from: 'old.jpg', to: 'new.jpg' }
+        'profile.avatar': { from: 'old.jpg', to: 'new.jpg' },
       };
 
       const meta = MetaBuilder.forUpdate(modifiedFields, {
         changes,
-        updateType: 'document'
+        updateType: 'document',
       });
 
       expect(meta.operation).toBe('update');
@@ -74,7 +74,7 @@ describe('MetaBuilder', () => {
 
       const meta = MetaBuilder.forUpdate(modifiedFields, {
         currentValues,
-        updateType: 'document'
+        updateType: 'document',
       });
 
       expect(meta.operation).toBe('update');
@@ -92,7 +92,7 @@ describe('MetaBuilder', () => {
 
       const meta = MetaBuilder.forUpdate(modifiedFields, {
         updateType: 'query',
-        queryOperation: 'updateMany'
+        queryOperation: 'updateMany',
       });
 
       expect(meta.operation).toBe('update');
@@ -120,7 +120,7 @@ describe('MetaBuilder', () => {
       const meta = MetaBuilder.forDelete('deleteOne', {
         deletedCount: 1,
         deletedFields,
-        fields
+        fields,
       });
 
       expect(meta.operation).toBe('delete');
@@ -133,10 +133,14 @@ describe('MetaBuilder', () => {
     });
 
     it('should build delete metadata with full document', () => {
-      const deletedDocument = { _id: '123', name: 'John', email: 'john@example.com' };
+      const deletedDocument = {
+        _id: '123',
+        name: 'John',
+        email: 'john@example.com',
+      };
 
       const meta = MetaBuilder.forDelete('findOneAndDelete', {
-        deletedDocument
+        deletedDocument,
       });
 
       expect(meta.operation).toBe('delete');
@@ -160,14 +164,14 @@ describe('MetaBuilder', () => {
       const documentIds = ['id1', 'id2', 'id3'];
       const deletedFieldsSample = {
         name: ['John', 'Jane', 'Bob'],
-        status: ['active', 'inactive']
+        status: ['active', 'inactive'],
       };
       const fields = ['name', 'status'];
 
       const meta = MetaBuilder.forBulkDelete(3, {
         documentIds,
         deletedFieldsSample,
-        fields
+        fields,
       });
 
       expect(meta.operation).toBe('bulkDelete');
@@ -214,7 +218,7 @@ describe('MetaBuilder', () => {
 
       expect(metaWithContext.context).toEqual({
         requestId: 'req123',
-        sessionId: 'sess123'
+        sessionId: 'sess123',
       });
     });
   });
@@ -224,15 +228,18 @@ describe('MetaBuilder', () => {
       const legacyMeta = {
         modifiedFields: ['name', 'email'],
         changes: {
-          name: { from: 'John', to: 'Jane' }
+          name: { from: 'John', to: 'Jane' },
         },
-        currentValues: { email: 'jane@example.com' }
+        currentValues: { email: 'jane@example.com' },
       };
 
       const converted = MetaBuilder.fromLegacy(legacyMeta);
 
       expect(converted.operation).toBe('update');
-      expect((converted as UpdateMetadata).modifiedFields).toEqual(['name', 'email']);
+      expect((converted as UpdateMetadata).modifiedFields).toEqual([
+        'name',
+        'email',
+      ]);
       expect((converted as UpdateMetadata).changes).toEqual(legacyMeta.changes);
     });
 
@@ -242,7 +249,7 @@ describe('MetaBuilder', () => {
         operation: 'deleteMany',
         summary: true,
         documentIds: ['id1', 'id2', 'id3'],
-        deletedFieldsSample: { name: ['John', 'Jane'] }
+        deletedFieldsSample: { name: ['John', 'Jane'] },
       };
 
       const converted = MetaBuilder.fromLegacy(legacyMeta);

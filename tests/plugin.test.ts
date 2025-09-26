@@ -140,7 +140,7 @@ describe('mongoose-activity', () => {
           email: 'john@example.com',
           status: 'active',
         },
-        timestamp: expect.any(Date)
+        timestamp: expect.any(Date),
       });
     });
 
