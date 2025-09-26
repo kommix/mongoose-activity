@@ -2,12 +2,17 @@ import { Activity } from './model';
 import { ActivityLogParams, LoggerOptions } from './types';
 import { activityContext } from './context';
 import { activityEvents } from './events';
+import { activityConfig } from './config';
 
 export async function logActivity(
   params: ActivityLogParams,
   options: LoggerOptions = {}
 ): Promise<void> {
-  const { throwOnError = false } = options;
+  const {
+    throwOnError = false,
+    asyncLogging = activityConfig.getAsyncLogging(),
+    session,
+  } = options;
 
   try {
     // Get context if available
@@ -65,10 +70,30 @@ export async function logActivity(
     }
 
     const activity = new Activity(activityData);
-    await activity.save();
 
-    // Emit logged event for real-time integrations
-    activityEvents.emit('activity:logged', activity.toObject());
+    // Support async logging (fire-and-forget) for performance
+    if (asyncLogging) {
+      // Fire-and-forget: don't await, but handle errors
+      activity
+        .save(session ? { session } : {})
+        .then(() => {
+          // Emit logged event for real-time integrations
+          activityEvents.emit('activity:logged', activity.toObject());
+        })
+        .catch((error) => {
+          activityEvents.emit('activity:error', error as Error, params);
+          console.warn(
+            '[mongoose-activity] Async activity save failed:',
+            error
+          );
+        });
+    } else {
+      // Synchronous logging: await the save
+      await activity.save(session ? { session } : {});
+
+      // Emit logged event for real-time integrations
+      activityEvents.emit('activity:logged', activity.toObject());
+    }
   } catch (error) {
     // Always emit error event and log with prefix
     activityEvents.emit('activity:error', error as Error, params);

@@ -2,6 +2,9 @@ export interface GlobalConfig {
   collectionName?: string;
   throwOnError?: boolean;
   indexes?: boolean;
+  asyncLogging?: boolean;
+  retentionDays?: number;
+  maxListeners?: number;
 }
 
 class ConfigManager {
@@ -9,6 +12,9 @@ class ConfigManager {
     collectionName: 'activities',
     throwOnError: false,
     indexes: true,
+    asyncLogging: false,
+    retentionDays: undefined,
+    maxListeners: 50,
   };
 
   configure(options: GlobalConfig): void {
@@ -29,6 +35,18 @@ class ConfigManager {
 
   getIndexes(): boolean {
     return this.config.indexes !== false;
+  }
+
+  getAsyncLogging(): boolean {
+    return this.config.asyncLogging || false;
+  }
+
+  getRetentionDays(): number | undefined {
+    return this.config.retentionDays;
+  }
+
+  getMaxListeners(): number {
+    return this.config.maxListeners || 50;
   }
 }
 

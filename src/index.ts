@@ -10,3 +10,8 @@ export {
 export { activityContext, ActivityContext } from './context';
 export { activityEvents, ActivityEventHandlers } from './events';
 export { activityConfig, GlobalConfig } from './config';
+export {
+  activityContextMiddleware,
+  koaActivityContextMiddleware,
+  MiddlewareOptions,
+} from './middleware';

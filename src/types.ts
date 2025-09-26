@@ -1,4 +1,4 @@
-import { Types, Document } from 'mongoose';
+import { Types, Document, Model } from 'mongoose';
 
 export interface IActivity extends Document {
   userId: Types.ObjectId;
@@ -9,6 +9,14 @@ export interface IActivity extends Document {
   type: string;
   meta?: Record<string, any>;
   createdAt: Date;
+}
+
+export interface IActivityModel extends Model<IActivity> {
+  prune(options?: {
+    olderThan?: string | Date | number;
+    entityType?: string;
+    limit?: number;
+  }): Promise<{ deletedCount: number }>;
 }
 
 export interface ActivityLogParams {
@@ -31,4 +39,6 @@ export interface PluginOptions {
 
 export interface LoggerOptions {
   throwOnError?: boolean;
+  asyncLogging?: boolean;
+  session?: any; // Mongoose session for transactions
 }

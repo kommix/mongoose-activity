@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import { IActivity } from './types';
+import { activityConfig } from './config';
 
 export type ActivityEventType =
   | 'activity:before-log'
@@ -46,5 +47,5 @@ class ActivityEventEmitter extends EventEmitter {
 
 export const activityEvents = new ActivityEventEmitter();
 
-// Set unlimited listeners to avoid memory leak warnings in large applications
-activityEvents.setMaxListeners(0);
+// Set configurable max listeners (default 50, or unlimited if set to 0)
+activityEvents.setMaxListeners(activityConfig.getMaxListeners());
