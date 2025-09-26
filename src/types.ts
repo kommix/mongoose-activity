@@ -36,6 +36,10 @@ export interface PluginOptions {
   throwOnError?: boolean;
   indexes?: boolean;
   trackOriginalValues?: boolean;
+  trackDeletions?: boolean; // Enable deletion tracking
+  deletionFields?: string[]; // Fields to capture before deletion
+  bulkDeleteSummary?: boolean; // For deleteMany: log 1 summary instead of per-document (performance)
+  bulkDeleteThreshold?: number; // Threshold above which to use summary mode (default: 100)
 }
 
 export interface LoggerOptions {

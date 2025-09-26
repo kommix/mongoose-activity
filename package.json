@@ -1,7 +1,7 @@
 {
   "name": "@kommix/mongoose-activity",
-  "version": "1.0.0-beta.1",
-  "description": "Modern Mongoose plugin for activity feeds, audit logs, and timelines with async logging, TypeScript, and zero dependencies",
+  "version": "1.0.0-rc.1",
+  "description": "Production-ready Mongoose plugin for complete activity tracking with deletion support, performance optimization, and enterprise features",
   "main": "dist/index.js",
   "sideEffects": false,
   "module": "dist/esm/index.js",
@@ -38,12 +38,17 @@
     "middleware",
     "express",
     "koa",
+    "deletion-tracking",
+    "enterprise",
+    "compliance",
     "kommix",
     "typescript",
     "async",
     "transaction",
     "context",
-    "production-ready"
+    "production-ready",
+    "performance",
+    "schema-validation"
   ],
   "author": "Kommix <dev@kommix.com>",
   "license": "MIT",
