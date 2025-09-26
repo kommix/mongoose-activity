@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/kommix/mongoose-activity/compare/v1.0.0...v1.0.1) (2025-09-26)
+
+
+### Bug Fixes
+
+* add dependabot configuration for automated dependency updates ([36b77ec](https://github.com/kommix/mongoose-activity/commit/36b77ec6e6fb0df7de1fc1b08f09dcf2870b1077))
+* add dependabot configuration for automated dependency updates ([577e028](https://github.com/kommix/mongoose-activity/commit/577e028b8a3914bcec5b6b6e7e01ac6848d1e23f))
+
 ## 1.0.0 (2025-09-26)
 
 
