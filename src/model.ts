@@ -177,6 +177,7 @@ function getActivityModel(): IActivityModel {
 
 export const Activity: IActivityModel = new Proxy(createActivityModel(), {
   get(target, prop) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return Reflect.get(getActivityModel(), prop);
   },
 
@@ -185,6 +186,7 @@ export const Activity: IActivityModel = new Proxy(createActivityModel(), {
   },
 
   construct(target, argArray) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return Reflect.construct(getActivityModel(), argArray);
   },
 
@@ -192,7 +194,7 @@ export const Activity: IActivityModel = new Proxy(createActivityModel(), {
     return Reflect.has(getActivityModel(), prop);
   },
 
-  ownKeys(target) {
+  ownKeys(_target) {
     return Reflect.ownKeys(getActivityModel());
   },
 

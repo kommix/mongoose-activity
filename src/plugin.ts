@@ -4,22 +4,6 @@ import { logActivity } from './logger';
 import { activityContext } from './context';
 import { activityConfig } from './config';
 
-// Helper function to check if a field path is tracked or is a parent/child of tracked fields
-function isFieldTracked(
-  modifiedPath: string,
-  trackedFields: string[]
-): boolean {
-  return trackedFields.some((trackedField) => {
-    // Exact match
-    if (modifiedPath === trackedField) return true;
-    // Modified path is a parent of tracked field (e.g., 'profile' modified, tracking 'profile.avatar')
-    if (trackedField.startsWith(modifiedPath + '.')) return true;
-    // Modified path is a child of tracked field (e.g., 'profile.avatar' modified, tracking 'profile')
-    if (modifiedPath.startsWith(trackedField + '.')) return true;
-    return false;
-  });
-}
-
 // Get the actual tracked fields that should be logged based on modified paths
 function getRelevantTrackedFields(
   modifiedPaths: string[],
@@ -401,12 +385,11 @@ export function activityPlugin<T extends Document>(
 
           if (shouldUseSummaryMode) {
             // Log a single summary activity instead of per-document
-            const userId =
-              (filter as any).userId || activityContext.getUserId();
+            const userId = filter.userId || activityContext.getUserId();
 
             // Try to get userId from first document if not in filter/context
             const firstDocUserId =
-              deletedDocs.length > 0 ? (deletedDocs[0] as any).userId : null;
+              deletedDocs.length > 0 ? deletedDocs[0].userId : null;
 
             const finalUserId = userId || firstDocUserId;
 
@@ -415,7 +398,9 @@ export function activityPlugin<T extends Document>(
                 deletedCount: result.deletedCount,
                 operation: 'deleteMany',
                 summary: true, // Indicate this is a summary entry
-                documentIds: deletedDocs.map((doc: any) => doc._id),
+                documentIds: deletedDocs.map(
+                  (doc: any) => doc._id as Types.ObjectId
+                ),
               };
 
               // Include aggregated field data if specified
@@ -425,7 +410,7 @@ export function activityPlugin<T extends Document>(
                   // Include first 5 values as a sample
                   const values = deletedDocs
                     .slice(0, 5)
-                    .map((doc: any) => doc[field])
+                    .map((doc: any) => doc[field] as unknown)
                     .filter((val: any) => val !== undefined);
                   if (values.length > 0) {
                     meta.deletedFieldsSample[field] = values;
@@ -450,8 +435,8 @@ export function activityPlugin<T extends Document>(
             // Default: Log activity for each deleted document that has a userId
             for (const deletedDoc of deletedDocs) {
               const userId =
-                (deletedDoc as any).userId ||
-                (filter as any).userId ||
+                deletedDoc.userId ||
+                filter.userId ||
                 activityContext.getUserId();
 
               if (userId) {

@@ -1,5 +1,5 @@
 import { Activity } from './model';
-import { ActivityLogParams, LoggerOptions } from './types';
+import { ActivityLogParams, LoggerOptions, IActivity } from './types';
 import { activityContext } from './context';
 import { activityEvents } from './events';
 import { activityConfig } from './config';
@@ -124,7 +124,7 @@ export async function getActivityFeed(
     startDate?: Date;
     endDate?: Date;
   } = {}
-) {
+): Promise<IActivity[]> {
   const {
     limit = 50,
     skip = 0,
@@ -134,7 +134,7 @@ export async function getActivityFeed(
     endDate,
   } = options;
 
-  const query: any = { userId };
+  const query: Record<string, any> = { userId };
 
   if (entityType) {
     query['entity.type'] = entityType;
@@ -155,7 +155,7 @@ export async function getActivityFeed(
     .limit(limit)
     .skip(skip)
     .lean()
-    .exec();
+    .exec() as Promise<IActivity[]>;
 }
 
 export async function getEntityActivity(
@@ -168,10 +168,10 @@ export async function getEntityActivity(
     startDate?: Date;
     endDate?: Date;
   } = {}
-) {
+): Promise<IActivity[]> {
   const { limit = 50, skip = 0, activityType, startDate, endDate } = options;
 
-  const query: any = {
+  const query: Record<string, any> = {
     'entity.type': entityType,
     'entity.id': entityId,
   };
@@ -191,7 +191,7 @@ export async function getEntityActivity(
     .limit(limit)
     .skip(skip)
     .lean()
-    .exec();
+    .exec() as Promise<IActivity[]>;
 }
 
 /**
