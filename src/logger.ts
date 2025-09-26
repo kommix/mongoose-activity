@@ -12,7 +12,7 @@ export async function logActivity(
   options: LoggerOptions = {}
 ): Promise<void> {
   const {
-    throwOnError = false,
+    throwOnError = activityConfig.getThrowOnError(),
     asyncLogging = activityConfig.getAsyncLogging(),
     session,
   } = options;
@@ -192,6 +192,22 @@ export async function getEntityActivity(
     .skip(skip)
     .lean()
     .exec();
+}
+
+/**
+ * Clear all pending async activity logging operations (for testing)
+ * WARNING: This will abandon pending operations without waiting for completion
+ */
+export function clearPendingActivities(): void {
+  pendingOperations.clear();
+}
+
+/**
+ * Get the count of pending async activity logging operations
+ * @returns Number of pending operations
+ */
+export function getPendingActivityCount(): number {
+  return pendingOperations.size;
 }
 
 /**

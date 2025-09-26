@@ -5,6 +5,8 @@ export {
   getActivityFeed,
   getEntityActivity,
   flushActivities,
+  clearPendingActivities,
+  getPendingActivityCount,
 } from './logger';
 export {
   IActivity,

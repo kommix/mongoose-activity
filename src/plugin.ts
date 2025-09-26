@@ -4,6 +4,39 @@ import { logActivity } from './logger';
 import { activityContext } from './context';
 import { activityConfig } from './config';
 
+// Helper function to check if a field path is tracked or is a parent/child of tracked fields
+function isFieldTracked(modifiedPath: string, trackedFields: string[]): boolean {
+  return trackedFields.some((trackedField) => {
+    // Exact match
+    if (modifiedPath === trackedField) return true;
+    // Modified path is a parent of tracked field (e.g., 'profile' modified, tracking 'profile.avatar')
+    if (trackedField.startsWith(modifiedPath + '.')) return true;
+    // Modified path is a child of tracked field (e.g., 'profile.avatar' modified, tracking 'profile')
+    if (modifiedPath.startsWith(trackedField + '.')) return true;
+    return false;
+  });
+}
+
+// Get the actual tracked fields that should be logged based on modified paths
+function getRelevantTrackedFields(modifiedPaths: string[], trackedFields: string[]): string[] {
+  const relevantFields = new Set<string>();
+
+  modifiedPaths.forEach((modifiedPath) => {
+    trackedFields.forEach((trackedField) => {
+      // If the tracked field is exactly the modified path or is a child of it
+      if (trackedField === modifiedPath || trackedField.startsWith(modifiedPath + '.')) {
+        relevantFields.add(trackedField);
+      }
+      // If the modified path is a child of the tracked field
+      else if (modifiedPath.startsWith(trackedField + '.')) {
+        relevantFields.add(trackedField);
+      }
+    });
+  });
+
+  return Array.from(relevantFields);
+}
+
 export function activityPlugin<T extends Document>(
   schema: Schema<T>,
   options: PluginOptions = {}
@@ -38,9 +71,8 @@ export function activityPlugin<T extends Document>(
 
     // Store modified paths for later comparison
     if (trackedFields.length > 0) {
-      const modifiedTrackedFields = this.modifiedPaths().filter((path) =>
-        trackedFields.includes(path)
-      );
+      const modifiedPaths = this.modifiedPaths();
+      const modifiedTrackedFields = getRelevantTrackedFields(modifiedPaths, trackedFields);
 
       if (modifiedTrackedFields.length > 0) {
         (this as any).__modifiedTrackedFields = modifiedTrackedFields;
@@ -108,7 +140,7 @@ export function activityPlugin<T extends Document>(
 
             modifiedFields.forEach((field: string) => {
               changes[field] = {
-                from: (doc as any).__originalValues[field],
+                from: (doc as any).__originalValues?.[field],
                 to: doc.get(field),
               };
             });
@@ -160,9 +192,8 @@ export function activityPlugin<T extends Document>(
 
         // Only proceed if we have an _id in the filter and relevant updates
         if (filter._id && update && trackedFields.length > 0) {
-          const updatedFields = Object.keys(update.$set || update).filter(
-            (field) => trackedFields.includes(field)
-          );
+          const updateKeys = Object.keys(update.$set || update);
+          const updatedFields = getRelevantTrackedFields(updateKeys, trackedFields);
 
           if (updatedFields.length > 0) {
             // Try to extract userId from update, filter, or context as fallback

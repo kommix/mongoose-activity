@@ -84,6 +84,7 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
     userSchema.plugin(activityPlugin, {
       trackedFields: ['name', 'email', 'status', 'profile.avatar'],
       collectionName: 'users',
+      trackOriginalValues: true,
     });
 
     const postSchema = new Schema<ITestPost>({
@@ -97,6 +98,7 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
     postSchema.plugin(activityPlugin, {
       trackedFields: ['title', 'published', 'tags'],
       collectionName: 'posts',
+      trackOriginalValues: true,
     });
 
     TestUserModel = mongoose.model<ITestUser>(
@@ -491,7 +493,7 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
       // Wait for chain completion
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      expect(beforeLogCount).toBe(4); // All activities hit before-log
+      expect(beforeLogCount).toBe(5); // All activities hit before-log (including chained)
       expect(loggedCount).toBe(4); // 3 original + 1 chained (cancelled one doesn't get logged)
       expect(cancelledTypes).toContain('cancelled_activity');
 
