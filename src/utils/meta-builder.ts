@@ -26,9 +26,8 @@ export interface UpdateMetadata extends BaseMetadata {
 }
 
 export interface DeleteMetadata extends BaseMetadata {
-  operation: 'delete' | 'bulkDelete';
+  operation: 'deleteOne' | 'deleteMany' | 'findOneAndDelete' | 'bulkDelete';
   deletedCount?: number; // Number of documents deleted
-  deleteType: 'deleteOne' | 'deleteMany' | 'findOneAndDelete';
   deletedFields?: Record<string, any>; // Specific fields from deleted document(s)
   deletedDocument?: any; // Complete document data (when no specific fields configured)
   summary?: boolean; // Indicates if this is a bulk operation summary
@@ -109,11 +108,10 @@ export class MetaBuilder {
     } = options;
 
     return {
-      operation: 'delete',
+      operation: deleteType,
       timestamp: new Date(),
       fields,
       deletedCount,
-      deleteType,
       deletedFields,
       deletedDocument,
     };
@@ -137,7 +135,6 @@ export class MetaBuilder {
       timestamp: new Date(),
       fields,
       deletedCount,
-      deleteType: 'deleteMany',
       summary: true,
       documentIds,
       deletedFieldsSample,
@@ -185,9 +182,10 @@ export class MetaBuilder {
     if (legacyMeta.deletedCount !== undefined) {
       return {
         ...base,
-        operation: legacyMeta.summary ? 'bulkDelete' : 'delete',
+        operation: legacyMeta.summary
+          ? 'bulkDelete'
+          : legacyMeta.operation || 'deleteOne',
         deletedCount: legacyMeta.deletedCount,
-        deleteType: legacyMeta.operation || 'deleteOne',
         deletedFields: legacyMeta.deletedFields,
         deletedDocument: legacyMeta.deletedDocument,
         summary: legacyMeta.summary,

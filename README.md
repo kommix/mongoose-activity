@@ -236,8 +236,7 @@ userSchema.plugin(activityPlugin, {
   type: 'users_deleted',           // or 'users_deleted_bulk' for summaries
   entity: { type: 'users', id: ObjectId },
   meta: {
-    operation: 'delete',          // General category (delete or bulkDelete)
-    deleteType: 'deleteMany',     // Specific operation (deleteOne, deleteMany, findOneAndDelete)
+    operation: 'deleteMany',      // Specific operation (deleteOne, deleteMany, findOneAndDelete, bulkDelete)
     deletedCount: 3,              // Number of documents deleted
     deletedFields: {              // Captured fields before deletion
       name: 'John Doe',

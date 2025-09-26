@@ -123,10 +123,9 @@ describe('MetaBuilder', () => {
         fields,
       });
 
-      expect(meta.operation).toBe('delete');
+      expect(meta.operation).toBe('deleteOne');
       expect(meta.fields).toEqual(fields);
       expect(meta.deletedCount).toBe(1);
-      expect(meta.deleteType).toBe('deleteOne');
       expect(meta.deletedFields).toEqual(deletedFields);
       expect(meta.deletedDocument).toBeUndefined();
       expectRecentTimestamp(meta.timestamp);
@@ -143,10 +142,9 @@ describe('MetaBuilder', () => {
         deletedDocument,
       });
 
-      expect(meta.operation).toBe('delete');
+      expect(meta.operation).toBe('findOneAndDelete');
       expect(meta.fields).toBeUndefined();
       expect(meta.deletedCount).toBe(1);
-      expect(meta.deleteType).toBe('findOneAndDelete');
       expect(meta.deletedDocument).toEqual(deletedDocument);
       expect(meta.deletedFields).toBeUndefined();
       expectRecentTimestamp(meta.timestamp);
@@ -177,7 +175,6 @@ describe('MetaBuilder', () => {
       expect(meta.operation).toBe('bulkDelete');
       expect(meta.fields).toEqual(fields);
       expect(meta.deletedCount).toBe(3);
-      expect(meta.deleteType).toBe('deleteMany');
       expect(meta.summary).toBe(true);
       expect(meta.documentIds).toEqual(documentIds);
       expect(meta.deletedFieldsSample).toEqual(deletedFieldsSample);
@@ -190,7 +187,6 @@ describe('MetaBuilder', () => {
       expect(meta.operation).toBe('bulkDelete');
       expect(meta.fields).toBeUndefined();
       expect(meta.deletedCount).toBe(5);
-      expect(meta.deleteType).toBe('deleteMany');
       expect(meta.summary).toBe(true);
       expect(meta.documentIds).toBeUndefined();
       expect(meta.deletedFieldsSample).toBeUndefined();
