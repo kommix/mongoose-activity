@@ -5,7 +5,10 @@ import { activityContext } from './context';
 import { activityConfig } from './config';
 
 // Helper function to check if a field path is tracked or is a parent/child of tracked fields
-function isFieldTracked(modifiedPath: string, trackedFields: string[]): boolean {
+function isFieldTracked(
+  modifiedPath: string,
+  trackedFields: string[]
+): boolean {
   return trackedFields.some((trackedField) => {
     // Exact match
     if (modifiedPath === trackedField) return true;
@@ -18,13 +21,19 @@ function isFieldTracked(modifiedPath: string, trackedFields: string[]): boolean 
 }
 
 // Get the actual tracked fields that should be logged based on modified paths
-function getRelevantTrackedFields(modifiedPaths: string[], trackedFields: string[]): string[] {
+function getRelevantTrackedFields(
+  modifiedPaths: string[],
+  trackedFields: string[]
+): string[] {
   const relevantFields = new Set<string>();
 
   modifiedPaths.forEach((modifiedPath) => {
     trackedFields.forEach((trackedField) => {
       // If the tracked field is exactly the modified path or is a child of it
-      if (trackedField === modifiedPath || trackedField.startsWith(modifiedPath + '.')) {
+      if (
+        trackedField === modifiedPath ||
+        trackedField.startsWith(modifiedPath + '.')
+      ) {
         relevantFields.add(trackedField);
       }
       // If the modified path is a child of the tracked field
@@ -38,7 +47,11 @@ function getRelevantTrackedFields(modifiedPaths: string[], trackedFields: string
 }
 
 // Helper function to validate field paths against schema
-function validateFieldPaths(schema: Schema, fields: string[], fieldType: string): string[] {
+function validateFieldPaths(
+  schema: Schema,
+  fields: string[],
+  fieldType: string
+): string[] {
   const validFields: string[] = [];
   const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -46,14 +59,15 @@ function validateFieldPaths(schema: Schema, fields: string[], fieldType: string)
     // Check if field exists in schema (handles nested paths like 'profile.avatar')
     const schemaPath = schema.path(field);
     const isVirtual = schema.virtualpath(field); // Check if virtual exists without creating it
-    const isNestedPath = field.includes('.') && schema.path(field.split('.')[0]);
+    const isNestedPath =
+      field.includes('.') && schema.path(field.split('.')[0]);
 
     if (schemaPath || isVirtual || isNestedPath) {
       validFields.push(field);
     } else if (isDevelopment) {
       console.warn(
         `[mongoose-activity] ${fieldType} field "${field}" not found in schema "${schema.get('collection') || 'unknown'}". ` +
-        `Available paths: ${schema.paths ? Object.keys(schema.paths).join(', ') : 'none'}`
+          `Available paths: ${schema.paths ? Object.keys(schema.paths).join(', ') : 'none'}`
       );
     }
   }
@@ -78,8 +92,16 @@ export function activityPlugin<T extends Document>(
   } = options;
 
   // Validate field paths against schema in development
-  const trackedFields = validateFieldPaths(schema, rawTrackedFields, 'trackedFields');
-  const deletionFields = validateFieldPaths(schema, rawDeletionFields, 'deletionFields');
+  const trackedFields = validateFieldPaths(
+    schema,
+    rawTrackedFields,
+    'trackedFields'
+  );
+  const deletionFields = validateFieldPaths(
+    schema,
+    rawDeletionFields,
+    'deletionFields'
+  );
 
   // Store original document state after loading from DB (only if tracking original values)
   schema.post('init', function () {
@@ -104,7 +126,10 @@ export function activityPlugin<T extends Document>(
     // Store modified paths for later comparison
     if (trackedFields.length > 0) {
       const modifiedPaths = this.modifiedPaths();
-      const modifiedTrackedFields = getRelevantTrackedFields(modifiedPaths, trackedFields);
+      const modifiedTrackedFields = getRelevantTrackedFields(
+        modifiedPaths,
+        trackedFields
+      );
 
       if (modifiedTrackedFields.length > 0) {
         (this as any).__modifiedTrackedFields = modifiedTrackedFields;
@@ -225,7 +250,10 @@ export function activityPlugin<T extends Document>(
         // Only proceed if we have an _id in the filter and relevant updates
         if (filter._id && update && trackedFields.length > 0) {
           const updateKeys = Object.keys(update.$set || update);
-          const updatedFields = getRelevantTrackedFields(updateKeys, trackedFields);
+          const updatedFields = getRelevantTrackedFields(
+            updateKeys,
+            trackedFields
+          );
 
           if (updatedFields.length > 0) {
             // Try to extract userId from update, filter, or context as fallback
@@ -278,7 +306,10 @@ export function activityPlugin<T extends Document>(
             // Store the document data for the post hook
             (this as any).__deletionData = {
               document: docToDelete,
-              userId: (docToDelete as any).userId || (filter as any).userId || activityContext.getUserId(),
+              userId:
+                (docToDelete as any).userId ||
+                (filter as any).userId ||
+                activityContext.getUserId(),
             };
           }
         }
@@ -304,7 +335,7 @@ export function activityPlugin<T extends Document>(
             // Include specific fields from the deleted document
             if (deletionFields.length > 0) {
               meta.deletedFields = {};
-              deletionFields.forEach(field => {
+              deletionFields.forEach((field) => {
                 meta.deletedFields[field] = deletedDoc[field];
               });
             } else {
@@ -327,7 +358,10 @@ export function activityPlugin<T extends Document>(
           }
         }
       } catch (error) {
-        console.warn('[mongoose-activity] Error logging deleteOne activity:', error);
+        console.warn(
+          '[mongoose-activity] Error logging deleteOne activity:',
+          error
+        );
       }
     });
 
@@ -347,7 +381,10 @@ export function activityPlugin<T extends Document>(
           };
         }
       } catch (error) {
-        console.warn('[mongoose-activity] Error in deleteMany pre hook:', error);
+        console.warn(
+          '[mongoose-activity] Error in deleteMany pre hook:',
+          error
+        );
       }
     });
 
@@ -359,17 +396,17 @@ export function activityPlugin<T extends Document>(
           const { documents: deletedDocs, filter } = deletionData;
 
           // Performance optimization: Use summary mode for large bulk operations
-          const shouldUseSummaryMode = bulkDeleteSummary ||
-            (result.deletedCount > bulkDeleteThreshold);
+          const shouldUseSummaryMode =
+            bulkDeleteSummary || result.deletedCount > bulkDeleteThreshold;
 
           if (shouldUseSummaryMode) {
             // Log a single summary activity instead of per-document
-            const userId = (filter as any).userId || activityContext.getUserId();
+            const userId =
+              (filter as any).userId || activityContext.getUserId();
 
             // Try to get userId from first document if not in filter/context
-            const firstDocUserId = deletedDocs.length > 0
-              ? (deletedDocs[0] as any).userId
-              : null;
+            const firstDocUserId =
+              deletedDocs.length > 0 ? (deletedDocs[0] as any).userId : null;
 
             const finalUserId = userId || firstDocUserId;
 
@@ -384,7 +421,7 @@ export function activityPlugin<T extends Document>(
               // Include aggregated field data if specified
               if (deletionFields.length > 0) {
                 meta.deletedFieldsSample = {};
-                deletionFields.forEach(field => {
+                deletionFields.forEach((field) => {
                   // Include first 5 values as a sample
                   const values = deletedDocs
                     .slice(0, 5)
@@ -412,7 +449,10 @@ export function activityPlugin<T extends Document>(
           } else {
             // Default: Log activity for each deleted document that has a userId
             for (const deletedDoc of deletedDocs) {
-              const userId = (deletedDoc as any).userId || (filter as any).userId || activityContext.getUserId();
+              const userId =
+                (deletedDoc as any).userId ||
+                (filter as any).userId ||
+                activityContext.getUserId();
 
               if (userId) {
                 // Prepare metadata
@@ -424,7 +464,7 @@ export function activityPlugin<T extends Document>(
                 // Include specific fields from the deleted document
                 if (deletionFields.length > 0) {
                   meta.deletedFields = {};
-                  deletionFields.forEach(field => {
+                  deletionFields.forEach((field) => {
                     meta.deletedFields[field] = deletedDoc[field];
                   });
                 } else {
@@ -449,7 +489,10 @@ export function activityPlugin<T extends Document>(
           }
         }
       } catch (error) {
-        console.warn('[mongoose-activity] Error logging deleteMany activity:', error);
+        console.warn(
+          '[mongoose-activity] Error logging deleteMany activity:',
+          error
+        );
       }
     });
 
@@ -466,12 +509,18 @@ export function activityPlugin<T extends Document>(
             // Store the document data for the post hook
             (this as any).__deletionData = {
               document: docToDelete,
-              userId: (docToDelete as any).userId || (filter as any).userId || activityContext.getUserId(),
+              userId:
+                (docToDelete as any).userId ||
+                (filter as any).userId ||
+                activityContext.getUserId(),
             };
           }
         }
       } catch (error) {
-        console.warn('[mongoose-activity] Error in findOneAndDelete pre hook:', error);
+        console.warn(
+          '[mongoose-activity] Error in findOneAndDelete pre hook:',
+          error
+        );
       }
     });
 
@@ -491,12 +540,14 @@ export function activityPlugin<T extends Document>(
             // Include specific fields from the deleted document
             if (deletionFields.length > 0) {
               meta.deletedFields = {};
-              deletionFields.forEach(field => {
+              deletionFields.forEach((field) => {
                 meta.deletedFields[field] = deletedDoc[field];
               });
             } else {
               // Include entire document if no specific fields specified
-              meta.deletedDocument = deletedDoc.toObject ? deletedDoc.toObject() : deletedDoc;
+              meta.deletedDocument = deletedDoc.toObject
+                ? deletedDoc.toObject()
+                : deletedDoc;
             }
 
             await logActivity(
@@ -514,7 +565,10 @@ export function activityPlugin<T extends Document>(
           }
         }
       } catch (error) {
-        console.warn('[mongoose-activity] Error logging findOneAndDelete activity:', error);
+        console.warn(
+          '[mongoose-activity] Error logging findOneAndDelete activity:',
+          error
+        );
       }
     });
   }

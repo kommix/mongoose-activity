@@ -364,7 +364,9 @@ describe('Activity Logger', () => {
       activityConfig.configure({ asyncLogging: true });
 
       // Create a hanging promise by mocking the Activity.save to never resolve
-      jest.spyOn(Activity.prototype, 'save').mockImplementation(() => new Promise(() => {})); // Never resolves
+      jest
+        .spyOn(Activity.prototype, 'save')
+        .mockImplementation(() => new Promise(() => {})); // Never resolves
 
       const userId = new mongoose.Types.ObjectId();
       const entityId = new mongoose.Types.ObjectId();

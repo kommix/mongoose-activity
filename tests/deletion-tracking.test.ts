@@ -83,7 +83,9 @@ describe('Deletion Tracking', () => {
       expect(deletionActivity.meta?.operation).toBe('deleteOne');
       expect(deletionActivity.meta?.deletedCount).toBe(1);
       expect(deletionActivity.meta?.deletedFields.name).toBe('John Doe');
-      expect(deletionActivity.meta?.deletedFields.email).toBe('john@example.com');
+      expect(deletionActivity.meta?.deletedFields.email).toBe(
+        'john@example.com'
+      );
       expect(deletionActivity.meta?.deletedFields.status).toBeUndefined(); // Not in deletionFields
     });
 
@@ -126,7 +128,9 @@ describe('Deletion Tracking', () => {
       const deletionActivity = activities[0];
       expect(deletionActivity.meta?.deletedDocument).toBeDefined();
       expect(deletionActivity.meta?.deletedDocument.name).toBe('Jane Doe');
-      expect(deletionActivity.meta?.deletedDocument.email).toBe('jane@example.com');
+      expect(deletionActivity.meta?.deletedDocument.email).toBe(
+        'jane@example.com'
+      );
       expect(deletionActivity.meta?.deletedDocument.status).toBe('premium');
     });
 
@@ -205,7 +209,9 @@ describe('Deletion Tracking', () => {
         expect(activity.meta?.operation).toBe('deleteMany');
         expect(activity.meta?.deletedCount).toBe(2); // Total count for the operation
         expect(activity.meta?.deletedFields.department).toBe('Engineering');
-        expect(['User 1', 'User 2']).toContain(activity.meta?.deletedFields.name);
+        expect(['User 1', 'User 2']).toContain(
+          activity.meta?.deletedFields.name
+        );
       }
     });
 
@@ -335,9 +341,11 @@ describe('Deletion Tracking', () => {
 
       // Simulate an error in the activity logging
       const originalLogActivity = require('../src/logger').logActivity;
-      jest.spyOn(require('../src/logger'), 'logActivity').mockImplementation(async () => {
-        throw new Error('Simulated logging error');
-      });
+      jest
+        .spyOn(require('../src/logger'), 'logActivity')
+        .mockImplementation(async () => {
+          throw new Error('Simulated logging error');
+        });
 
       userSchema.plugin(activityPlugin, {
         collectionName: 'users',
@@ -355,7 +363,9 @@ describe('Deletion Tracking', () => {
       await user.save();
 
       // Delete should still work despite logging error
-      await expect(UserModel.deleteOne({ _id: user._id })).resolves.not.toThrow();
+      await expect(
+        UserModel.deleteOne({ _id: user._id })
+      ).resolves.not.toThrow();
 
       // Verify user was actually deleted
       const foundUser = await UserModel.findById(user._id);
@@ -385,10 +395,14 @@ describe('Deletion Tracking', () => {
       });
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[mongoose-activity] trackedFields field "invalidField" not found')
+        expect.stringContaining(
+          '[mongoose-activity] trackedFields field "invalidField" not found'
+        )
       );
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[mongoose-activity] deletionFields field "nonExistentField" not found')
+        expect.stringContaining(
+          '[mongoose-activity] deletionFields field "nonExistentField" not found'
+        )
       );
 
       consoleSpy.mockRestore();
@@ -538,7 +552,7 @@ describe('Deletion Tracking', () => {
       await UserModel.deleteOne({ _id: user._id });
 
       // Wait for event processing
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       // Verify event was emitted
       expect(loggedActivity).toBeDefined();
