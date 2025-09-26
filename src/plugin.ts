@@ -3,6 +3,7 @@ import { PluginOptions } from './types';
 import { logActivity } from './logger';
 import { activityContext } from './context';
 import { activityConfig } from './config';
+import { ActivityErrorHandler, MetaBuilder } from './utils';
 
 // Get the actual tracked fields that should be logged based on modified paths
 function getRelevantTrackedFields(
@@ -49,9 +50,11 @@ function validateFieldPaths(
     if (schemaPath || isVirtual || isNestedPath) {
       validFields.push(field);
     } else if (isDevelopment) {
-      console.warn(
-        `[mongoose-activity] ${fieldType} field "${field}" not found in schema "${schema.get('collection') || 'unknown'}". ` +
-          `Available paths: ${schema.paths ? Object.keys(schema.paths).join(', ') : 'none'}`
+      ActivityErrorHandler.logFieldValidationWarning(
+        fieldType,
+        field,
+        schema.get('collection') || 'unknown',
+        schema.paths ? Object.keys(schema.paths) : []
       );
     }
   }
@@ -88,6 +91,8 @@ export function activityPlugin<T extends Document>(
   );
 
   // Store original document state after loading from DB (only if tracking original values)
+  // MEMORY NOTE: __initialState stores a copy of all tracked field values
+  // Memory usage = trackedFields.length × average_field_size × documents_in_memory
   schema.post('init', function () {
     if (trackOriginalValues && trackedFields.length > 0) {
       (this as any).__initialState = {};
@@ -119,6 +124,8 @@ export function activityPlugin<T extends Document>(
         (this as any).__modifiedTrackedFields = modifiedTrackedFields;
 
         if (trackOriginalValues) {
+          // MEMORY NOTE: __originalValues stores another copy for modified fields only
+          // This enables before/after change detection but doubles memory for changed fields
           (this as any).__originalValues = {};
 
           // Store the original values from initial state
@@ -147,6 +154,9 @@ export function activityPlugin<T extends Document>(
         }
 
         if (doc.userId) {
+          // Extract session from document context for transaction support
+          const session = (doc.$session && doc.$session()) || undefined;
+
           await logActivity(
             {
               userId: doc.userId,
@@ -155,25 +165,27 @@ export function activityPlugin<T extends Document>(
                 id: doc._id as Types.ObjectId,
               },
               type: `${collectionName}_created`,
-              meta:
-                trackedFields.length > 0
-                  ? trackedFields.reduce(
+              meta: trackedFields.length > 0
+                ? MetaBuilder.forCreate(
+                    trackedFields,
+                    trackedFields.reduce(
                       (acc, field) => {
                         acc[field] = doc.get(field);
                         return acc;
                       },
                       {} as Record<string, any>
                     )
-                  : undefined,
+                  )
+                : MetaBuilder.forCreate([]),
             },
-            { throwOnError }
+            { throwOnError, session }
           );
         }
       } else {
         // Document updated
         const modifiedFields = (doc as any).__modifiedTrackedFields;
         if (modifiedFields && modifiedFields.length > 0 && doc.userId) {
-          const meta: any = { modifiedFields };
+          let meta;
 
           if (trackOriginalValues) {
             // Include detailed before/after changes when tracking original values
@@ -186,15 +198,25 @@ export function activityPlugin<T extends Document>(
               };
             });
 
-            meta.changes = changes;
+            meta = MetaBuilder.forUpdate(modifiedFields, {
+              changes,
+              updateType: 'document'
+            });
           } else {
             // When not tracking original values, just include current values
             const currentValues: Record<string, any> = {};
             modifiedFields.forEach((field: string) => {
               currentValues[field] = doc.get(field);
             });
-            meta.currentValues = currentValues;
+
+            meta = MetaBuilder.forUpdate(modifiedFields, {
+              currentValues,
+              updateType: 'document'
+            });
           }
+
+          // Extract session from document context for transaction support
+          const session = (doc.$session && doc.$session()) || undefined;
 
           await logActivity(
             {
@@ -206,12 +228,12 @@ export function activityPlugin<T extends Document>(
               type: activityType,
               meta,
             },
-            { throwOnError }
+            { throwOnError, session }
           );
         }
       }
     } catch (error) {
-      console.warn('[mongoose-activity] Error logging activity:', error);
+      ActivityErrorHandler.logHookError('post save', error);
     }
   });
 
@@ -231,8 +253,8 @@ export function activityPlugin<T extends Document>(
         const filter = (this as any).__filter;
         const update = (this as any).__update;
 
-        // Only proceed if we have an _id in the filter and relevant updates
-        if (filter._id && update && trackedFields.length > 0) {
+        // Only proceed if we have relevant updates and valid filter
+        if (update && trackedFields.length > 0 && (filter._id || Object.keys(filter).length > 0)) {
           const updateKeys = Object.keys(update.$set || update);
           const updatedFields = getRelevantTrackedFields(
             updateKeys,
@@ -248,29 +270,54 @@ export function activityPlugin<T extends Document>(
               activityContext.getUserId();
 
             if (userId) {
-              await logActivity(
-                {
-                  userId: userId as Types.ObjectId,
-                  entity: {
-                    type: collectionName,
-                    id: filter._id as Types.ObjectId,
+              // Extract session from query context for transaction support
+              const session = (this as any).getOptions?.().session || undefined;
+
+              // For updateMany operations, we create a single activity representing the bulk operation
+              // For updateOne and findOneAndUpdate, we create per-document activity
+              const isUpdateMany = (this as any).op === 'updateMany';
+
+              if (isUpdateMany) {
+                // For updateMany, create a summary activity
+                await logActivity(
+                  {
+                    userId: userId as Types.ObjectId,
+                    entity: {
+                      type: collectionName,
+                      id: new Types.ObjectId(), // Generate a placeholder ID for bulk operations
+                    },
+                    type: `${collectionName}_updated_bulk`,
+                    meta: MetaBuilder.forUpdate(updatedFields, {
+                      updateType: 'bulk',
+                      queryOperation: 'updateMany',
+                      filter: Object.keys(filter).length > 0 ? filter : undefined,
+                    }),
                   },
-                  type: activityType,
-                  meta: {
-                    updatedFields,
-                    updateOperation: (this as any).op,
+                  { throwOnError, session }
+                );
+              } else {
+                // Single document update
+                await logActivity(
+                  {
+                    userId: userId as Types.ObjectId,
+                    entity: {
+                      type: collectionName,
+                      id: (filter._id as Types.ObjectId) || new Types.ObjectId(),
+                    },
+                    type: activityType,
+                    meta: MetaBuilder.forUpdate(updatedFields, {
+                      updateType: 'query',
+                      queryOperation: (this as any).op,
+                    }),
                   },
-                },
-                { throwOnError }
-              );
+                  { throwOnError, session }
+                );
+              }
             }
           }
         }
       } catch (error) {
-        console.warn(
-          '[mongoose-activity] Error logging activity in update operation:',
-          error
-        );
+        ActivityErrorHandler.logHookError('post update', error);
       }
     }
   );
@@ -298,7 +345,7 @@ export function activityPlugin<T extends Document>(
           }
         }
       } catch (error) {
-        console.warn('[mongoose-activity] Error in deleteOne pre hook:', error);
+        ActivityErrorHandler.logHookError('deleteOne pre', error);
       }
     });
 
@@ -311,21 +358,21 @@ export function activityPlugin<T extends Document>(
 
           if (userId) {
             // Prepare metadata with selected fields
-            const meta: any = {
-              deletedCount: result.deletedCount,
-              operation: 'deleteOne',
-            };
+            const deletedFields = deletionFields.length > 0 ?
+              deletionFields.reduce((acc, field) => {
+                acc[field] = deletedDoc[field];
+                return acc;
+              }, {} as Record<string, any>) : undefined;
 
-            // Include specific fields from the deleted document
-            if (deletionFields.length > 0) {
-              meta.deletedFields = {};
-              deletionFields.forEach((field) => {
-                meta.deletedFields[field] = deletedDoc[field];
-              });
-            } else {
-              // Include entire document if no specific fields specified
-              meta.deletedDocument = deletedDoc;
-            }
+            const meta = MetaBuilder.forDelete('deleteOne', {
+              deletedCount: result.deletedCount,
+              deletedFields,
+              deletedDocument: deletionFields.length === 0 ? deletedDoc : undefined,
+              fields: deletionFields.length > 0 ? deletionFields : undefined,
+            });
+
+            // Extract session from query context for transaction support
+            const session = (this as any).getOptions?.().session || undefined;
 
             await logActivity(
               {
@@ -337,15 +384,12 @@ export function activityPlugin<T extends Document>(
                 type: `${collectionName}_deleted`,
                 meta,
               },
-              { throwOnError }
+              { throwOnError, session }
             );
           }
         }
       } catch (error) {
-        console.warn(
-          '[mongoose-activity] Error logging deleteOne activity:',
-          error
-        );
+        ActivityErrorHandler.logHookError('deleteOne post', error);
       }
     });
 
@@ -365,10 +409,7 @@ export function activityPlugin<T extends Document>(
           };
         }
       } catch (error) {
-        console.warn(
-          '[mongoose-activity] Error in deleteMany pre hook:',
-          error
-        );
+        ActivityErrorHandler.logHookError('deleteMany pre', error);
       }
     });
 
@@ -381,7 +422,7 @@ export function activityPlugin<T extends Document>(
 
           // Performance optimization: Use summary mode for large bulk operations
           const shouldUseSummaryMode =
-            bulkDeleteSummary || result.deletedCount > bulkDeleteThreshold;
+            bulkDeleteSummary || result.deletedCount >= bulkDeleteThreshold;
 
           if (shouldUseSummaryMode) {
             // Log a single summary activity instead of per-document
@@ -394,18 +435,9 @@ export function activityPlugin<T extends Document>(
             const finalUserId = userId || firstDocUserId;
 
             if (finalUserId) {
-              const meta: any = {
-                deletedCount: result.deletedCount,
-                operation: 'deleteMany',
-                summary: true, // Indicate this is a summary entry
-                documentIds: deletedDocs.map(
-                  (doc: any) => doc._id as Types.ObjectId
-                ),
-              };
-
-              // Include aggregated field data if specified
-              if (deletionFields.length > 0) {
-                meta.deletedFieldsSample = {};
+              // Build sample field data for bulk operations
+              const deletedFieldsSample: Record<string, any[]> | undefined = deletionFields.length > 0 ? {} : undefined;
+              if (deletedFieldsSample) {
                 deletionFields.forEach((field) => {
                   // Include first 5 values as a sample
                   const values = deletedDocs
@@ -413,10 +445,19 @@ export function activityPlugin<T extends Document>(
                     .map((doc: any) => doc[field] as unknown)
                     .filter((val: any) => val !== undefined);
                   if (values.length > 0) {
-                    meta.deletedFieldsSample[field] = values;
+                    deletedFieldsSample[field] = values;
                   }
                 });
               }
+
+              const meta = MetaBuilder.forBulkDelete(result.deletedCount, {
+                documentIds: deletedDocs.map((doc: any) => doc._id.toString()),
+                deletedFieldsSample,
+                fields: deletionFields.length > 0 ? deletionFields : undefined,
+              });
+
+              // Extract session from query context for transaction support
+              const session = (this as any).getOptions?.().session || undefined;
 
               await logActivity(
                 {
@@ -428,7 +469,7 @@ export function activityPlugin<T extends Document>(
                   type: `${collectionName}_deleted_bulk`,
                   meta,
                 },
-                { throwOnError }
+                { throwOnError, session }
               );
             }
           } else {
@@ -441,21 +482,21 @@ export function activityPlugin<T extends Document>(
 
               if (userId) {
                 // Prepare metadata
-                const meta: any = {
-                  deletedCount: result.deletedCount,
-                  operation: 'deleteMany',
-                };
+                const deletedFields = deletionFields.length > 0 ?
+                  deletionFields.reduce((acc, field) => {
+                    acc[field] = deletedDoc[field];
+                    return acc;
+                  }, {} as Record<string, any>) : undefined;
 
-                // Include specific fields from the deleted document
-                if (deletionFields.length > 0) {
-                  meta.deletedFields = {};
-                  deletionFields.forEach((field) => {
-                    meta.deletedFields[field] = deletedDoc[field];
-                  });
-                } else {
-                  // Include entire document if no specific fields specified
-                  meta.deletedDocument = deletedDoc;
-                }
+                const meta = MetaBuilder.forDelete('deleteMany', {
+                  deletedCount: result.deletedCount,
+                  deletedFields,
+                  deletedDocument: deletionFields.length === 0 ? deletedDoc : undefined,
+                  fields: deletionFields.length > 0 ? deletionFields : undefined,
+                });
+
+                // Extract session from query context for transaction support (shared across all docs in batch)
+                const session = (this as any).getOptions?.().session || undefined;
 
                 await logActivity(
                   {
@@ -467,17 +508,14 @@ export function activityPlugin<T extends Document>(
                     type: `${collectionName}_deleted`,
                     meta,
                   },
-                  { throwOnError }
+                  { throwOnError, session }
                 );
               }
             }
           }
         }
       } catch (error) {
-        console.warn(
-          '[mongoose-activity] Error logging deleteMany activity:',
-          error
-        );
+        ActivityErrorHandler.logHookError('deleteMany post', error);
       }
     });
 
@@ -502,10 +540,7 @@ export function activityPlugin<T extends Document>(
           }
         }
       } catch (error) {
-        console.warn(
-          '[mongoose-activity] Error in findOneAndDelete pre hook:',
-          error
-        );
+        ActivityErrorHandler.logHookError('findOneAndDelete pre', error);
       }
     });
 
@@ -518,22 +553,21 @@ export function activityPlugin<T extends Document>(
 
           if (userId) {
             // Prepare metadata
-            const meta: any = {
-              operation: 'findOneAndDelete',
-            };
+            const deletedFields = deletionFields.length > 0 ?
+              deletionFields.reduce((acc, field) => {
+                acc[field] = deletedDoc[field];
+                return acc;
+              }, {} as Record<string, any>) : undefined;
 
-            // Include specific fields from the deleted document
-            if (deletionFields.length > 0) {
-              meta.deletedFields = {};
-              deletionFields.forEach((field) => {
-                meta.deletedFields[field] = deletedDoc[field];
-              });
-            } else {
-              // Include entire document if no specific fields specified
-              meta.deletedDocument = deletedDoc.toObject
-                ? deletedDoc.toObject()
-                : deletedDoc;
-            }
+            const meta = MetaBuilder.forDelete('findOneAndDelete', {
+              deletedFields,
+              deletedDocument: deletionFields.length === 0 ?
+                (deletedDoc.toObject ? deletedDoc.toObject() : deletedDoc) : undefined,
+              fields: deletionFields.length > 0 ? deletionFields : undefined,
+            });
+
+            // Extract session from query context for transaction support
+            const session = (this as any).getOptions?.().session || undefined;
 
             await logActivity(
               {
@@ -545,15 +579,12 @@ export function activityPlugin<T extends Document>(
                 type: `${collectionName}_deleted`,
                 meta,
               },
-              { throwOnError }
+              { throwOnError, session }
             );
           }
         }
       } catch (error) {
-        console.warn(
-          '[mongoose-activity] Error logging findOneAndDelete activity:',
-          error
-        );
+        ActivityErrorHandler.logHookError('findOneAndDelete post', error);
       }
     });
   }

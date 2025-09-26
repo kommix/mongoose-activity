@@ -680,6 +680,95 @@ const recentOrders = await getActivityFeed(userId, {
 });
 ```
 
+## 🧠 Memory Safety & Best Practices
+
+The plugin temporarily stores field values on documents for change detection. Follow these practices to minimize memory usage:
+
+### 1. Selective Field Tracking
+```typescript
+// ✅ Good: Track only essential fields
+schema.plugin(activityPlugin, {
+  trackedFields: ['status', 'priority', 'assignee'] // Small, important fields
+});
+
+// ❌ Avoid: Tracking large objects or frequent-change fields
+schema.plugin(activityPlugin, {
+  trackedFields: ['content', 'metadata', 'lastSeen'] // Large/frequent data
+});
+```
+
+### 2. Disable Original Value Tracking for Large Datasets
+```typescript
+// When trackOriginalValues is enabled, the plugin stores __initialState and __originalValues
+// This doubles memory usage for tracked fields
+
+schema.plugin(activityPlugin, {
+  trackedFields: ['title', 'status'],
+  trackOriginalValues: false, // Disables before/after change tracking to save memory
+});
+```
+
+### 3. Memory Impact of Tracking Options
+
+| Option | Memory Usage | Use Case |
+|--------|-------------|----------|
+| `trackOriginalValues: false` | Minimal - only current values stored | Production with memory constraints |
+| `trackOriginalValues: true` | 2x - stores before/after values | Detailed audit trails, forensics |
+| Large `trackedFields` arrays | Linear increase per field | Fine-grained tracking needs |
+| Nested object tracking | High - deep copies stored | Rich document structures |
+
+### 4. Document Lifecycle Considerations
+```typescript
+// Memory is reclaimed when documents are garbage collected
+// For long-running applications processing many documents:
+
+// ✅ Good: Process documents in batches
+async function updateUserStatuses(userIds: string[]) {
+  for (let i = 0; i < userIds.length; i += 100) {
+    const batch = userIds.slice(i, i + 100);
+    const users = await User.find({ _id: { $in: batch } });
+
+    for (const user of users) {
+      user.status = 'updated';
+      await user.save(); // Activity logged, then document can be GC'd
+    }
+    // Batch processed, memory freed
+  }
+}
+
+// ❌ Avoid: Loading many documents simultaneously
+const allUsers = await User.find({}); // All documents in memory
+// Each document stores __initialState, __originalValues, etc.
+```
+
+### 5. Monitoring Memory Usage
+```typescript
+// Monitor document memory in development
+User.schema.post('save', function() {
+  if (process.env.NODE_ENV === 'development') {
+    const hasInitialState = '__initialState' in this;
+    const hasOriginalValues = '__originalValues' in this;
+    console.log(`Document memory: initialState=${hasInitialState}, originalValues=${hasOriginalValues}`);
+  }
+});
+```
+
+### 6. Recommendations by Scale
+
+**Small Applications (< 10k documents/day)**
+- Use `trackOriginalValues: true` for detailed audit trails
+- Track all relevant fields
+
+**Medium Applications (10k-100k documents/day)**
+- Consider `trackOriginalValues: false` for high-frequency operations
+- Be selective with `trackedFields`
+
+**Large Applications (> 100k documents/day)**
+- Disable `trackOriginalValues` on high-frequency schemas
+- Track only critical business fields
+- Use bulk operations where possible
+- Monitor memory usage in production
+
 ## 🧪 Development & Testing
 
 ```bash

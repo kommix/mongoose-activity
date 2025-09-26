@@ -22,3 +22,11 @@ export {
   koaActivityContextMiddleware,
   MiddlewareOptions,
 } from './middleware';
+export {
+  ActivityErrorHandler,
+  MetaBuilder,
+  BaseMetadata,
+  CreateMetadata,
+  UpdateMetadata,
+  DeleteMetadata
+} from './utils';

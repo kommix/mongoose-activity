@@ -133,9 +133,14 @@ describe('mongoose-activity', () => {
       expect(activity.entity.id).toEqual(user._id);
       expect(activity.type).toBe('users_created');
       expect(activity.meta).toEqual({
-        name: 'John Doe',
-        email: 'john@example.com',
-        status: 'active',
+        operation: 'create',
+        fields: ['name', 'email', 'status'],
+        initialValues: {
+          name: 'John Doe',
+          email: 'john@example.com',
+          status: 'active',
+        },
+        timestamp: expect.any(Date)
       });
     });
 

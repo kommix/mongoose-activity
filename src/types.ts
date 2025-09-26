@@ -30,12 +30,31 @@ export interface ActivityLogParams {
 }
 
 export interface PluginOptions {
+  /**
+   * Fields to automatically track changes for (supports nested fields like 'profile.avatar')
+   *
+   * MEMORY IMPACT: Each tracked field increases memory usage per document.
+   * When trackOriginalValues=true, memory usage doubles for these fields.
+   * Recommendation: Track only essential fields, avoid large objects.
+   */
   trackedFields?: string[];
+
   activityType?: string;
   collectionName?: string;
   throwOnError?: boolean;
   indexes?: boolean;
+
+  /**
+   * Enable before/after change detection for tracked fields
+   *
+   * MEMORY IMPACT: When enabled, stores __initialState (on init) and __originalValues (on save)
+   * This roughly doubles memory usage for tracked fields but provides detailed change logs.
+   *
+   * - false: Logs current values only (memory efficient)
+   * - true: Logs before/after values (memory intensive, detailed audit)
+   */
   trackOriginalValues?: boolean;
+
   trackDeletions?: boolean; // Enable deletion tracking
   deletionFields?: string[]; // Fields to capture before deletion
   bulkDeleteSummary?: boolean; // For deleteMany: log 1 summary instead of per-document (performance)

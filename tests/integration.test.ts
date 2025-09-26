@@ -178,8 +178,8 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
       const userCreated = activities[0];
       expect(userCreated.type).toBe('users_created');
       expect(userCreated.entity.type).toBe('users');
-      expect(userCreated.meta?.name).toBe('John Doe');
-      expect(userCreated.meta?.['profile.avatar']).toBe('avatar.jpg');
+      expect(userCreated.meta?.initialValues?.name).toBe('John Doe');
+      expect(userCreated.meta?.initialValues?.['profile.avatar']).toBe('avatar.jpg');
 
       // Check manual activity
       const emailVerified = activities[1];
@@ -191,8 +191,8 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
       const postCreated = activities[2];
       expect(postCreated.type).toBe('posts_created');
       expect(postCreated.entity.type).toBe('posts');
-      expect(postCreated.meta?.title).toBe('My First Post');
-      expect(postCreated.meta?.published).toBe(false);
+      expect(postCreated.meta?.initialValues?.title).toBe('My First Post');
+      expect(postCreated.meta?.initialValues?.published).toBe(false);
 
       // Check user update
       const userUpdated = activities[3];

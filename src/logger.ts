@@ -3,6 +3,7 @@ import { ActivityLogParams, LoggerOptions, IActivity } from './types';
 import { activityContext } from './context';
 import { activityEvents } from './events';
 import { activityConfig } from './config';
+import { ActivityErrorHandler } from './utils';
 
 // Track pending async operations for graceful shutdown
 const pendingOperations = new Set<Promise<void>>();
@@ -23,8 +24,8 @@ export async function logActivity(
 
     // Warn if context is missing and no userId provided
     if (!context && !params.userId) {
-      console.warn(
-        '[mongoose-activity] ActivityContext not initialized for this request. Consider using activityContext.run() in your middleware or provide userId explicitly.'
+      ActivityErrorHandler.logDevelopmentWarning(
+        'ActivityContext not initialized for this request. Consider using activityContext.run() in your middleware or provide userId explicitly.'
       );
     }
 
@@ -53,8 +54,8 @@ export async function logActivity(
 
     // Warn if no userId will be set
     if (!activityData.userId) {
-      console.warn(
-        '[mongoose-activity] No userId provided, activity may not be linked to a user'
+      ActivityErrorHandler.logDevelopmentWarning(
+        'No userId provided, activity may not be linked to a user'
       );
     }
 
@@ -84,10 +85,10 @@ export async function logActivity(
           activityEvents.emit('activity:logged', activity.toObject());
         })
         .catch((error) => {
-          activityEvents.emit('activity:error', error as Error, params);
-          console.warn(
-            '[mongoose-activity] Async activity save failed:',
-            error
+          ActivityErrorHandler.logActivityError(
+            'Async activity save failed:',
+            error,
+            params
           );
         })
         .finally(() => {
@@ -103,9 +104,8 @@ export async function logActivity(
       activityEvents.emit('activity:logged', activity.toObject());
     }
   } catch (error) {
-    // Always emit error event and log with prefix
-    activityEvents.emit('activity:error', error as Error, params);
-    console.warn('[mongoose-activity] Failed to log activity:', error);
+    // Use centralized error handler
+    ActivityErrorHandler.logActivityError('Failed to log activity:', error, params);
 
     // Optionally throw error if configured to do so
     if (throwOnError) {
@@ -259,7 +259,7 @@ export async function flushActivities(
     // Race between all operations completing, timeout, and abort signal
     await Promise.race(promises);
   } catch (error) {
-    console.warn('[mongoose-activity] Flush interrupted:', error);
+    ActivityErrorHandler.logError('Flush interrupted:', error);
     throw error;
   }
 }
