@@ -62,5 +62,31 @@ describe('Activity Configuration', () => {
         maxListeners: 50,
       });
     });
+
+    it('should reset configuration to defaults', () => {
+      // Change configuration
+      activityConfig.configure({
+        collectionName: 'custom_activities',
+        throwOnError: true,
+        asyncLogging: true,
+        maxListeners: 200,
+      });
+
+      // Verify configuration was changed
+      expect(activityConfig.getCollectionName()).toBe('custom_activities');
+      expect(activityConfig.getThrowOnError()).toBe(true);
+      expect(activityConfig.getMaxListeners()).toBe(200);
+
+      // Reset configuration
+      activityConfig.reset();
+
+      // Verify all values are back to defaults
+      expect(activityConfig.getCollectionName()).toBe('activities');
+      expect(activityConfig.getThrowOnError()).toBe(false);
+      expect(activityConfig.getIndexes()).toBe(true);
+      expect(activityConfig.getAsyncLogging()).toBe(false);
+      expect(activityConfig.getRetentionDays()).toBeUndefined();
+      expect(activityConfig.getMaxListeners()).toBe(50);
+    });
   });
 });

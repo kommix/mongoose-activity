@@ -99,8 +99,14 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
       collectionName: 'posts',
     });
 
-    TestUserModel = mongoose.model<ITestUser>(`TestUser${testCounter}`, userSchema);
-    TestPostModel = mongoose.model<ITestPost>(`TestPost${testCounter}`, postSchema);
+    TestUserModel = mongoose.model<ITestUser>(
+      `TestUser${testCounter}`,
+      userSchema
+    );
+    TestPostModel = mongoose.model<ITestPost>(
+      `TestPost${testCounter}`,
+      postSchema
+    );
   });
 
   describe('Complete Workflow Integration', () => {
@@ -125,7 +131,7 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
       });
 
       await user.save();
-      await new Promise(resolve => setTimeout(resolve, 50)); // Allow event processing
+      await new Promise((resolve) => setTimeout(resolve, 50)); // Allow event processing
 
       // Step 2: Manual activity logging for additional context
       await logActivity({
@@ -145,19 +151,19 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
       });
 
       await post.save();
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       // Step 4: Update user profile (should trigger activity)
       user.profile!.avatar = 'new-avatar.jpg';
       user.status = 'premium';
       await user.save();
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       // Step 5: Publish the post (should trigger activity)
       post.published = true;
       post.tags.push('published');
       await post.save();
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       // Verify all activities were logged
       expect(activityCount).toBe(5); // user_created, manual_log, post_created, user_updated, post_updated
@@ -189,8 +195,12 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
       // Check user update
       const userUpdated = activities[3];
       expect(userUpdated.type).toBe('document_updated');
-      expect(userUpdated.meta?.changes?.['profile.avatar']?.from).toBe('avatar.jpg');
-      expect(userUpdated.meta?.changes?.['profile.avatar']?.to).toBe('new-avatar.jpg');
+      expect(userUpdated.meta?.changes?.['profile.avatar']?.from).toBe(
+        'avatar.jpg'
+      );
+      expect(userUpdated.meta?.changes?.['profile.avatar']?.to).toBe(
+        'new-avatar.jpg'
+      );
       expect(userUpdated.meta?.changes?.status?.from).toBe('active');
       expect(userUpdated.meta?.changes?.status?.to).toBe('premium');
 
@@ -205,10 +215,16 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
       expect(userFeed).toHaveLength(5);
 
       // Test entity-specific activity
-      const userEntityActivity = await getEntityActivity('users', (user._id as mongoose.Types.ObjectId).toString());
+      const userEntityActivity = await getEntityActivity(
+        'users',
+        (user._id as mongoose.Types.ObjectId).toString()
+      );
       expect(userEntityActivity).toHaveLength(2); // creation + update
 
-      const postEntityActivity = await getEntityActivity('posts', (post._id as mongoose.Types.ObjectId).toString());
+      const postEntityActivity = await getEntityActivity(
+        'posts',
+        (post._id as mongoose.Types.ObjectId).toString()
+      );
       expect(postEntityActivity).toHaveLength(2); // creation + update
     });
   });
@@ -242,7 +258,7 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
       });
 
       // Wait for async completion
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
       expect(activities).toHaveLength(1);
       expect(activities[0].type).toBe('async_test');
 
@@ -298,6 +314,7 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
       const next = jest.fn();
 
       // Simulate middleware execution
+      const originalRun = activityContext.run;
       await new Promise<void>((resolve) => {
         activityContext.run = (context, callback) => {
           expect(context.userId).toEqual(req.user.id);
@@ -313,6 +330,9 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
 
         middleware(req, res, next);
       });
+
+      // Restore original function
+      activityContext.run = originalRun;
 
       // Now test logging with context
       activityContext.run(
@@ -334,7 +354,7 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
         }
       );
 
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(capturedActivities).toHaveLength(1);
       const activity = capturedActivities[0];
@@ -369,6 +389,7 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
       const next = jest.fn().mockResolvedValue(undefined);
 
       // Simulate Koa middleware execution
+      const originalRun = activityContext.run;
       await new Promise<void>(async (resolve) => {
         activityContext.run = (context, callback) => {
           expect(context.userId).toEqual(ctx.state.user.id);
@@ -384,6 +405,9 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
 
         await middleware(ctx, next);
       });
+
+      // Restore original function
+      activityContext.run = originalRun;
 
       expect(next).toHaveBeenCalled();
     });
@@ -465,7 +489,7 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
       });
 
       // Wait for chain completion
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       expect(beforeLogCount).toBe(4); // All activities hit before-log
       expect(loggedCount).toBe(4); // 3 original + 1 chained (cancelled one doesn't get logged)
@@ -475,16 +499,22 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
       expect(activities).toHaveLength(4);
 
       // Check that cancelled activity is not in database
-      const cancelledActivity = activities.find(a => a.type === 'cancelled_activity');
+      const cancelledActivity = activities.find(
+        (a) => a.type === 'cancelled_activity'
+      );
       expect(cancelledActivity).toBeUndefined();
 
       // Check that modified activity has the modification
-      const modifiedActivity = activities.find(a => a.type === 'modified_activity');
+      const modifiedActivity = activities.find(
+        (a) => a.type === 'modified_activity'
+      );
       expect(modifiedActivity?.meta?.modified).toBe(true);
       expect(modifiedActivity?.meta?.original).toBe(true);
 
       // Check that chained activity exists
-      const chainedActivity = activities.find(a => a.type === 'chained_activity');
+      const chainedActivity = activities.find(
+        (a) => a.type === 'chained_activity'
+      );
       expect(chainedActivity?.meta?.triggeredBy).toBe('trigger_chain');
     });
   });
@@ -547,8 +577,12 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
       expect(filteredPruneResult.deletedCount).toBe(1);
 
       const finalActivities = await Activity.find({});
-      const typeAActivities = finalActivities.filter(a => a.entity.type === 'typeA');
-      const typeBActivities = finalActivities.filter(a => a.entity.type === 'typeB');
+      const typeAActivities = finalActivities.filter(
+        (a) => a.entity.type === 'typeA'
+      );
+      const typeBActivities = finalActivities.filter(
+        (a) => a.entity.type === 'typeB'
+      );
 
       expect(typeAActivities).toHaveLength(0); // Pruned
       expect(typeBActivities).toHaveLength(1); // Not pruned
@@ -592,12 +626,17 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
       const activities = await Activity.find({});
       expect(activities).toHaveLength(2); // no_user_test and context_user_test succeeded
 
-      const contextActivity = activities.find(a => a.type === 'context_user_test');
+      const contextActivity = activities.find(
+        (a) => a.type === 'context_user_test'
+      );
       expect(contextActivity?.userId).toEqual(userId);
     });
 
     it('should handle concurrent operations safely', async () => {
-      const userIds = Array.from({ length: 5 }, () => new mongoose.Types.ObjectId());
+      const userIds = Array.from(
+        { length: 5 },
+        () => new mongoose.Types.ObjectId()
+      );
       const activities: any[] = [];
 
       activityEvents.on('activity:logged', (activity) => {
@@ -606,18 +645,21 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
 
       // Create multiple concurrent activities
       const promises = userIds.map(async (userId, index) => {
-        return activityContext.run({ userId, requestId: `req-${index}` }, async () => {
-          await logActivity({
-            userId, // Explicitly provide for TypeScript
-            entity: { type: 'concurrent', id: new mongoose.Types.ObjectId() },
-            type: 'concurrent_test',
-            meta: { index },
-          });
-        });
+        return activityContext.run(
+          { userId, requestId: `req-${index}` },
+          async () => {
+            await logActivity({
+              userId, // Explicitly provide for TypeScript
+              entity: { type: 'concurrent', id: new mongoose.Types.ObjectId() },
+              type: 'concurrent_test',
+              meta: { index },
+            });
+          }
+        );
       });
 
       await Promise.all(promises);
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       expect(activities).toHaveLength(5);
 

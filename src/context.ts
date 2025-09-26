@@ -40,7 +40,17 @@ class ActivityContextManager {
     const context = this.get();
     if (context) {
       Object.keys(context).forEach((key) => delete context[key]);
+      // Mark context as ended to prevent further operations
+      context.ended = true;
     }
+  }
+
+  /**
+   * Disable the AsyncLocalStorage context entirely
+   * Use this for hard resets in tests or when switching environments
+   */
+  disable(): void {
+    this.storage.disable();
   }
 
   isEnded(): boolean {

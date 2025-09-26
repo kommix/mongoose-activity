@@ -5,6 +5,7 @@ import {
   logActivity,
   getActivityFeed,
   getEntityActivity,
+  flushActivities,
   activityConfig,
   activityEvents,
 } from '../src';
@@ -303,6 +304,90 @@ describe('Activity Logger', () => {
           type: 'post_created',
         })
       ).resolves.not.toThrow();
+    });
+  });
+
+  describe('Flush Activities', () => {
+    it('should flush pending async operations', async () => {
+      activityConfig.configure({ asyncLogging: true });
+
+      const userId = new mongoose.Types.ObjectId();
+      const entityId = new mongoose.Types.ObjectId();
+
+      // Start multiple async logging operations
+      const promises = Array.from({ length: 5 }, (_, i) =>
+        logActivity({
+          userId,
+          entity: { type: 'post', id: entityId },
+          type: 'post_created',
+          meta: { index: i },
+        })
+      );
+
+      // Wait for logActivity calls to complete (but not the async saves)
+      await Promise.all(promises);
+
+      // Flush should wait for all pending operations
+      await flushActivities(5000);
+
+      // All activities should be saved
+      const activities = await Activity.find({});
+      expect(activities).toHaveLength(5);
+    });
+
+    it('should return immediately when no pending operations', async () => {
+      const startTime = Date.now();
+      await flushActivities();
+      const endTime = Date.now();
+
+      // Should return quickly when no operations are pending
+      expect(endTime - startTime).toBeLessThan(100);
+    });
+
+    it('should timeout if operations take too long', async () => {
+      activityConfig.configure({ asyncLogging: true });
+
+      // Mock a long-running operation by creating a Promise that never resolves
+      const userId = new mongoose.Types.ObjectId();
+      const entityId = new mongoose.Types.ObjectId();
+
+      // Start an async operation
+      await logActivity({
+        userId,
+        entity: { type: 'post', id: entityId },
+        type: 'post_created',
+      });
+
+      // Flush with very short timeout should reject
+      await expect(flushActivities(50)).rejects.toThrow(
+        'Activity flush timeout after 50ms'
+      );
+    });
+
+    it('should handle concurrent flush calls', async () => {
+      activityConfig.configure({ asyncLogging: true });
+
+      const userId = new mongoose.Types.ObjectId();
+      const entityId = new mongoose.Types.ObjectId();
+
+      // Start async operation
+      await logActivity({
+        userId,
+        entity: { type: 'post', id: entityId },
+        type: 'post_created',
+      });
+
+      // Multiple flush calls should all complete successfully
+      const flushPromises = [
+        flushActivities(5000),
+        flushActivities(5000),
+        flushActivities(5000),
+      ];
+
+      await Promise.all(flushPromises);
+
+      const activities = await Activity.find({});
+      expect(activities).toHaveLength(1);
     });
   });
 });

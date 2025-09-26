@@ -24,9 +24,9 @@ describe('Activity Context', () => {
       });
     });
 
-    it('should return empty object when no context is set', () => {
+    it('should return undefined when no context is set', () => {
       const context = activityContext.get();
-      expect(context).toEqual({});
+      expect(context).toBeUndefined();
     });
 
     it('should set individual context properties', () => {
@@ -40,8 +40,8 @@ describe('Activity Context', () => {
         activityContext.set('sessionId', 'session789');
 
         const context = activityContext.get();
-        expect(context).toEqual({
-          userId: new mongoose.Types.ObjectId(),
+        expect(context).toMatchObject({
+          userId: initialContext.userId,
           requestId: 'req456',
           ip: '192.168.1.1',
           sessionId: 'session789',
@@ -51,7 +51,10 @@ describe('Activity Context', () => {
 
     it('should handle nested context runs', () => {
       const outerContext = { userId: new mongoose.Types.ObjectId() };
-      const innerContext = { userId: new mongoose.Types.ObjectId(), requestId: 'inner-req' };
+      const innerContext = {
+        userId: new mongoose.Types.ObjectId(),
+        requestId: 'inner-req',
+      };
 
       activityContext.run(outerContext, () => {
         expect(activityContext.get()).toEqual(outerContext);
@@ -66,8 +69,14 @@ describe('Activity Context', () => {
     });
 
     it('should maintain context isolation between different runs', () => {
-      const context1 = { userId: new mongoose.Types.ObjectId(), requestId: 'req1' };
-      const context2 = { userId: new mongoose.Types.ObjectId(), requestId: 'req2' };
+      const context1 = {
+        userId: new mongoose.Types.ObjectId(),
+        requestId: 'req1',
+      };
+      const context2 = {
+        userId: new mongoose.Types.ObjectId(),
+        requestId: 'req2',
+      };
 
       let capturedContext1: any;
       let capturedContext2: any;
@@ -93,7 +102,7 @@ describe('Activity Context', () => {
 
       await activityContext.run(testContext, async () => {
         // Simulate async operation
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
 
         const context = activityContext.get();
         expect(context).toEqual(testContext);
@@ -101,16 +110,41 @@ describe('Activity Context', () => {
     });
 
     it('should clear context properly', () => {
-      const testContext = { userId: 'user123' };
+      const testContext = { userId: new mongoose.Types.ObjectId() };
 
       activityContext.run(testContext, () => {
         expect(activityContext.get()).toEqual(testContext);
 
         activityContext.clear();
 
-        // Context should be cleared
-        expect(activityContext.get()).toEqual({});
+        // Context should be cleared but marked as ended
+        const clearedContext = activityContext.get();
+        expect(clearedContext).toEqual({ ended: true });
+        expect(activityContext.isEnded()).toBe(true);
       });
+    });
+
+    it('should disable AsyncLocalStorage entirely', () => {
+      const testContext = { userId: new mongoose.Types.ObjectId() };
+
+      // Run context normally first
+      activityContext.run(testContext, () => {
+        expect(activityContext.get()).toEqual(testContext);
+      });
+
+      // Disable the storage
+      activityContext.disable();
+
+      // After disabling, context operations should still work (disable doesn't prevent new contexts)
+      // but the storage is marked as disabled internally
+      let contextInside: any;
+      activityContext.run(testContext, () => {
+        contextInside = activityContext.get();
+      });
+
+      // AsyncLocalStorage.disable() doesn't prevent new runs, just exits current context
+      // So we expect the context to still be set in new runs
+      expect(contextInside).toEqual(testContext);
     });
 
     it('should handle context updates within run', () => {
@@ -129,7 +163,7 @@ describe('Activity Context', () => {
       });
 
       // Context should not persist outside of run
-      expect(activityContext.get()).toEqual({});
+      expect(activityContext.get()).toBeUndefined();
     });
 
     it('should handle concurrent context operations', async () => {
@@ -145,7 +179,9 @@ describe('Activity Context', () => {
       const promises = contexts.map((context, index) =>
         activityContext.run(context, async () => {
           // Add some async delay
-          await new Promise(resolve => setTimeout(resolve, Math.random() * 50));
+          await new Promise((resolve) =>
+            setTimeout(resolve, Math.random() * 50)
+          );
 
           const retrievedContext = activityContext.get();
           results[index] = retrievedContext;

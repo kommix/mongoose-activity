@@ -4,6 +4,9 @@ import { activityContext } from './context';
 import { activityEvents } from './events';
 import { activityConfig } from './config';
 
+// Track pending async operations for graceful shutdown
+const pendingOperations = new Set<Promise<void>>();
+
 export async function logActivity(
   params: ActivityLogParams,
   options: LoggerOptions = {}
@@ -73,8 +76,8 @@ export async function logActivity(
 
     // Support async logging (fire-and-forget) for performance
     if (asyncLogging) {
-      // Fire-and-forget: don't await, but handle errors
-      activity
+      // Fire-and-forget: don't await, but track for graceful shutdown
+      const savePromise = activity
         .save(session ? { session } : {})
         .then(() => {
           // Emit logged event for real-time integrations
@@ -86,7 +89,12 @@ export async function logActivity(
             '[mongoose-activity] Async activity save failed:',
             error
           );
+        })
+        .finally(() => {
+          pendingOperations.delete(savePromise);
         });
+
+      pendingOperations.add(savePromise);
     } else {
       // Synchronous logging: await the save
       await activity.save(session ? { session } : {});
@@ -184,4 +192,38 @@ export async function getEntityActivity(
     .skip(skip)
     .lean()
     .exec();
+}
+
+/**
+ * Flush all pending async activity logging operations
+ * Useful for graceful shutdown to ensure all activities are saved
+ *
+ * @param timeout Maximum time to wait in milliseconds (default: 30000)
+ * @returns Promise that resolves when all operations complete or timeout is reached
+ */
+export async function flushActivities(timeout: number = 30000): Promise<void> {
+  if (pendingOperations.size === 0) {
+    return;
+  }
+
+  const operations = Array.from(pendingOperations);
+
+  // Create a timeout promise
+  const timeoutPromise = new Promise<void>((_, reject) => {
+    setTimeout(() => {
+      reject(
+        new Error(
+          `Activity flush timeout after ${timeout}ms with ${pendingOperations.size} operations still pending`
+        )
+      );
+    }, timeout);
+  });
+
+  try {
+    // Race between all operations completing and timeout
+    await Promise.race([Promise.allSettled(operations), timeoutPromise]);
+  } catch (error) {
+    console.warn('[mongoose-activity] Flush timeout:', error);
+    throw error;
+  }
 }

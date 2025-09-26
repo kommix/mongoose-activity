@@ -102,6 +102,7 @@ describe('mongoose-activity', () => {
       testUserSchema.plugin(activityPlugin, {
         trackedFields: ['name', 'email', 'status'],
         collectionName: 'users',
+        trackOriginalValues: true,
       });
 
       const modelName = `TestUser${testCounter}`;
@@ -226,6 +227,108 @@ describe('mongoose-activity', () => {
 
       const activities = await Activity.find({});
       expect(activities).toHaveLength(0);
+    });
+
+    describe('trackOriginalValues option', () => {
+      it('should include detailed changes when trackOriginalValues is true', async () => {
+        const userId = new mongoose.Types.ObjectId();
+        const newSchema = new Schema<ITestUser>({
+          userId: { type: Schema.Types.ObjectId, required: true },
+          name: { type: String, required: true },
+          email: { type: String, required: true },
+          status: { type: String, default: 'active' },
+        });
+
+        newSchema.plugin(activityPlugin, {
+          trackedFields: ['name', 'email'],
+          collectionName: 'users',
+          trackOriginalValues: true,
+        });
+
+        const TrackingUserModel = mongoose.model<ITestUser>(
+          `TrackingUser${testCounter}`,
+          newSchema
+        );
+
+        const user = new TrackingUserModel({
+          userId,
+          name: 'John Doe',
+          email: 'john@example.com',
+          status: 'active',
+        });
+
+        await user.save();
+        await Activity.deleteMany({});
+
+        // Update tracked fields
+        user.name = 'Jane Doe';
+        user.email = 'jane@example.com';
+        await user.save();
+
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        const activities = await Activity.find({});
+        expect(activities).toHaveLength(1);
+
+        const activity = activities[0];
+        expect(activity.meta?.changes).toBeDefined();
+        expect(activity.meta?.changes.name).toEqual({
+          from: 'John Doe',
+          to: 'Jane Doe',
+        });
+        expect(activity.meta?.changes.email).toEqual({
+          from: 'john@example.com',
+          to: 'jane@example.com',
+        });
+      });
+
+      it('should include current values when trackOriginalValues is false (default)', async () => {
+        const userId = new mongoose.Types.ObjectId();
+        const newSchema = new Schema<ITestUser>({
+          userId: { type: Schema.Types.ObjectId, required: true },
+          name: { type: String, required: true },
+          email: { type: String, required: true },
+          status: { type: String, default: 'active' },
+        });
+
+        newSchema.plugin(activityPlugin, {
+          trackedFields: ['name', 'email'],
+          collectionName: 'users',
+          trackOriginalValues: false,
+        });
+
+        const NoTrackingUserModel = mongoose.model<ITestUser>(
+          `NoTrackingUser${testCounter}`,
+          newSchema
+        );
+
+        const user = new NoTrackingUserModel({
+          userId,
+          name: 'John Doe',
+          email: 'john@example.com',
+          status: 'active',
+        });
+
+        await user.save();
+        await Activity.deleteMany({});
+
+        // Update tracked fields
+        user.name = 'Jane Doe';
+        user.email = 'jane@example.com';
+        await user.save();
+
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        const activities = await Activity.find({});
+        expect(activities).toHaveLength(1);
+
+        const activity = activities[0];
+        expect(activity.meta?.changes).toBeUndefined();
+        expect(activity.meta?.currentValues).toBeDefined();
+        expect(activity.meta?.currentValues.name).toBe('Jane Doe');
+        expect(activity.meta?.currentValues.email).toBe('jane@example.com');
+        expect(activity.meta?.modifiedFields).toEqual(['name', 'email']);
+      });
     });
   });
 });

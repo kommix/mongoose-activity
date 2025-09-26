@@ -61,8 +61,8 @@ export function activityContextMiddleware(options: MiddlewareOptions = {}) {
         activityContext.set('ended', true);
       });
 
-      // Clean up context on error
-      res.on('error', () => {
+      // Clean up context on connection close (covers abrupt disconnects)
+      res.on('close', () => {
         activityContext.set('ended', true);
       });
 

@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose';
+import { Schema, model, Types } from 'mongoose';
 import { IActivity, IActivityModel } from './types';
 import { activityConfig } from './config';
 
@@ -55,7 +55,7 @@ if (activityConfig.getIndexes()) {
 }
 
 // Add static methods to the Activity model
-ActivitySchema.statics.prune = function (
+ActivitySchema.statics.prune = async function (
   options: {
     olderThan?: string | Date | number;
     entityType?: string;
@@ -102,7 +102,28 @@ ActivitySchema.statics.prune = function (
     query['entity.type'] = entityType;
   }
 
-  return limit ? this.deleteMany(query).limit(limit) : this.deleteMany(query);
+  // Handle batch deletion properly since deleteMany().limit() is ignored by MongoDB
+  if (limit) {
+    // Find documents to delete in batches
+    const docsToDelete = (await this.find(query)
+      .select('_id')
+      .limit(limit)
+      .lean()) as { _id: Types.ObjectId }[];
+
+    if (docsToDelete.length === 0) {
+      return { deletedCount: 0 };
+    }
+
+    const deleteResult = await this.deleteMany({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      _id: { $in: docsToDelete.map((doc) => doc._id) },
+    });
+
+    return { deletedCount: deleteResult.deletedCount || 0 };
+  }
+
+  const deleteResult = await this.deleteMany(query);
+  return { deletedCount: deleteResult.deletedCount || 0 };
 };
 
 export const Activity: IActivityModel = model<IActivity, IActivityModel>(

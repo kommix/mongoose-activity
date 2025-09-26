@@ -1,6 +1,11 @@
 export { Activity } from './model';
 export { activityPlugin } from './plugin';
-export { logActivity, getActivityFeed, getEntityActivity } from './logger';
+export {
+  logActivity,
+  getActivityFeed,
+  getEntityActivity,
+  flushActivities,
+} from './logger';
 export {
   IActivity,
   ActivityLogParams,

@@ -13,11 +13,12 @@ export function activityPlugin<T extends Document>(
     activityType = 'document_updated',
     collectionName = schema.get('collection') || 'unknown',
     throwOnError = activityConfig.getThrowOnError(),
+    trackOriginalValues = false,
   } = options;
 
-  // Store original document state after loading from DB
+  // Store original document state after loading from DB (only if tracking original values)
   schema.post('init', function () {
-    if (trackedFields.length > 0) {
+    if (trackOriginalValues && trackedFields.length > 0) {
       (this as any).__initialState = {};
       trackedFields.forEach((field) => {
         (this as any).__initialState[field] = this.get(field);
@@ -43,14 +44,17 @@ export function activityPlugin<T extends Document>(
 
       if (modifiedTrackedFields.length > 0) {
         (this as any).__modifiedTrackedFields = modifiedTrackedFields;
-        (this as any).__originalValues = {};
 
-        // Store the original values from initial state
-        modifiedTrackedFields.forEach((field) => {
-          // Use the value from when document was loaded from DB
-          const initialState = (this as any).__initialState || {};
-          (this as any).__originalValues[field] = initialState[field];
-        });
+        if (trackOriginalValues) {
+          (this as any).__originalValues = {};
+
+          // Store the original values from initial state
+          modifiedTrackedFields.forEach((field) => {
+            // Use the value from when document was loaded from DB
+            const initialState = (this as any).__initialState || {};
+            (this as any).__originalValues[field] = initialState[field];
+          });
+        }
       }
     }
 
@@ -61,8 +65,8 @@ export function activityPlugin<T extends Document>(
   schema.post('save', async function (doc: T & { userId?: Types.ObjectId }) {
     try {
       if ((doc as any).__wasNew) {
-        // New document created - store initial state for future change tracking
-        if (trackedFields.length > 0) {
+        // New document created - store initial state for future change tracking (only if enabled)
+        if (trackOriginalValues && trackedFields.length > 0) {
           (doc as any).__initialState = {};
           trackedFields.forEach((field) => {
             (doc as any).__initialState[field] = doc.get(field);
@@ -96,14 +100,28 @@ export function activityPlugin<T extends Document>(
         // Document updated
         const modifiedFields = (doc as any).__modifiedTrackedFields;
         if (modifiedFields && modifiedFields.length > 0 && doc.userId) {
-          const changes: Record<string, { from: any; to: any }> = {};
+          const meta: any = { modifiedFields };
 
-          modifiedFields.forEach((field: string) => {
-            changes[field] = {
-              from: (doc as any).__originalValues[field],
-              to: doc.get(field),
-            };
-          });
+          if (trackOriginalValues) {
+            // Include detailed before/after changes when tracking original values
+            const changes: Record<string, { from: any; to: any }> = {};
+
+            modifiedFields.forEach((field: string) => {
+              changes[field] = {
+                from: (doc as any).__originalValues[field],
+                to: doc.get(field),
+              };
+            });
+
+            meta.changes = changes;
+          } else {
+            // When not tracking original values, just include current values
+            const currentValues: Record<string, any> = {};
+            modifiedFields.forEach((field: string) => {
+              currentValues[field] = doc.get(field);
+            });
+            meta.currentValues = currentValues;
+          }
 
           await logActivity(
             {
@@ -113,10 +131,7 @@ export function activityPlugin<T extends Document>(
                 id: doc._id as Types.ObjectId,
               },
               type: activityType,
-              meta: {
-                changes,
-                modifiedFields,
-              },
+              meta,
             },
             { throwOnError }
           );

@@ -52,7 +52,7 @@ describe('Activity Middleware', () => {
 
         expect(next).toHaveBeenCalled();
         expect(res.on).toHaveBeenCalledWith('finish', expect.any(Function));
-        expect(res.on).toHaveBeenCalledWith('error', expect.any(Function));
+        expect(res.on).toHaveBeenCalledWith('close', expect.any(Function));
       } finally {
         activityContext.run = originalRun;
       }

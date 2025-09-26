@@ -1,4 +1,4 @@
-import { Types, Document, Model } from 'mongoose';
+import { Types, Document, Model, ClientSession } from 'mongoose';
 
 export interface IActivity extends Document {
   userId: Types.ObjectId;
@@ -35,10 +35,11 @@ export interface PluginOptions {
   collectionName?: string;
   throwOnError?: boolean;
   indexes?: boolean;
+  trackOriginalValues?: boolean;
 }
 
 export interface LoggerOptions {
   throwOnError?: boolean;
   asyncLogging?: boolean;
-  session?: any; // Mongoose session for transactions
+  session?: ClientSession; // Mongoose session for transactions
 }

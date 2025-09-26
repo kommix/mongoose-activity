@@ -17,8 +17,42 @@ class ConfigManager {
     maxListeners: 50,
   };
 
-  configure(options: GlobalConfig): void {
+  configure(options: Partial<GlobalConfig>): void {
     this.config = { ...this.config, ...options };
+
+    // Update EventEmitter max listeners if changed
+    if (options.maxListeners !== undefined) {
+      // Use dynamic import to avoid circular dependency
+      import('./events')
+        .then(({ activityEvents }) => {
+          activityEvents.setMaxListeners(options.maxListeners!);
+        })
+        .catch(() => {
+          // Silently ignore errors during shutdown/cleanup
+        });
+    }
+  }
+
+  reset(): void {
+    const defaults: GlobalConfig = {
+      collectionName: 'activities',
+      throwOnError: false,
+      indexes: true,
+      asyncLogging: false,
+      retentionDays: undefined,
+      maxListeners: 50,
+    };
+
+    this.config = defaults;
+
+    // Reset EventEmitter max listeners
+    import('./events')
+      .then(({ activityEvents }) => {
+        activityEvents.setMaxListeners(defaults.maxListeners!);
+      })
+      .catch(() => {
+        // Silently ignore errors during shutdown/cleanup
+      });
   }
 
   get(): GlobalConfig {
