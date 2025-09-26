@@ -1,6 +1,4 @@
-<div align="center">
-  <img src="./assets/kommix-logo.svg" alt="Kommix Logo" width="200" />
-</div>
+<img src="./assets/kommix-logo.svg" alt="Kommix Logo" width="200" />
 
 # @kommix/mongoose-activity
 
