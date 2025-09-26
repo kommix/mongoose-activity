@@ -1,6 +1,6 @@
 {
   "name": "@kommix/mongoose-activity",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Production-ready Mongoose plugin for complete activity tracking with deletion support, performance optimization, and enterprise features",
   "main": "dist/index.js",
   "sideEffects": false,
