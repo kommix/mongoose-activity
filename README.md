@@ -808,7 +808,7 @@ The package includes comprehensive Jest tests with **91.93% code coverage** and 
 
 ## 🧩 Compatibility
 
-- **Node.js**: 16+ (matches engines field in package.json)
+- **Node.js**: 18+ (matches engines field in package.json)
 - **MongoDB**: 4.0+ (for TTL and indexes)
 - **Mongoose**: 6.0+ (for TypeScript support)
 - **TypeScript**: 4.0+ (full type support)
