@@ -1,0 +1,80 @@
+version: 2
+updates:
+  # Update GitHub Actions weekly
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "kommix"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+
+  # Update npm dependencies weekly
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "kommix"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+
+    # Group updates to reduce PR noise
+    groups:
+      # Group all TypeScript-related dependencies
+      typescript:
+        patterns:
+          - "typescript"
+          - "@types/*"
+          - "ts-*"
+
+      # Group all ESLint-related dependencies
+      eslint:
+        patterns:
+          - "eslint*"
+          - "@typescript-eslint/*"
+
+      # Group Jest testing dependencies
+      jest:
+        patterns:
+          - "jest*"
+          - "@types/jest"
+          - "ts-jest"
+
+      # Group MongoDB testing dependencies
+      mongodb-test:
+        patterns:
+          - "mongodb-memory-server"
+          - "mongoose"
+
+      # Group development tooling
+      dev-tools:
+        patterns:
+          - "prettier"
+          - "nodemon"
+
+    # Ignore specific packages that need manual review
+    ignore:
+      # Ignore major version updates for critical dependencies
+      - dependency-name: "mongoose"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
+
+    # Auto-merge patch and minor updates for dev dependencies
+    # Note: This requires enabling auto-merge in repository settings
+    pull-request-branch-name:
+      separator: "/"
