@@ -3,6 +3,7 @@
 # @kommix/mongoose-activity
 
 [![npm version](https://img.shields.io/npm/v/@kommix/mongoose-activity)](https://www.npmjs.com/package/@kommix/mongoose-activity)
+[![GitHub release](https://img.shields.io/github/v/release/kommix/mongoose-activity)](https://github.com/kommix/mongoose-activity/releases)
 [![build](https://img.shields.io/github/actions/workflow/status/kommix/mongoose-activity/ci.yml)](https://github.com/kommix/mongoose-activity/actions)
 [![coverage](https://img.shields.io/badge/coverage-91.93%25-brightgreen)](https://github.com/kommix/mongoose-activity)
 [![license](https://img.shields.io/github/license/kommix/mongoose-activity)](LICENSE)
