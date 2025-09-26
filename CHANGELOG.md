@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.3](https://github.com/kommix/mongoose-activity/compare/v1.0.2...v1.0.3) (2025-09-26)
+
+
+### Bug Fixes
+
+* add publish job to release workflow for NPM package ([79935d0](https://github.com/kommix/mongoose-activity/commit/79935d08f993ed001e400504d0545c77b3b8ca51))
+* add publish job to release workflow for NPM package ([d6cfe34](https://github.com/kommix/mongoose-activity/commit/d6cfe3440ebdf73ea6c1cf3710d2eb60278c4ee3))
+
 ## [1.0.2](https://github.com/kommix/mongoose-activity/compare/v1.0.1...v1.0.2) (2025-09-26)
 
 
