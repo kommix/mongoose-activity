@@ -9,7 +9,7 @@
 [![maintenance](https://img.shields.io/maintenance/yes/2025)](https://github.com/kommix/mongoose-activity)
 [![GitHub release](https://img.shields.io/github/v/release/kommix/mongoose-activity)](https://github.com/kommix/mongoose-activity/releases)
 [![build](https://img.shields.io/github/actions/workflow/status/kommix/mongoose-activity/ci.yml)](https://github.com/kommix/mongoose-activity/actions)
-[![coverage](https://img.shields.io/badge/coverage-91.93%25-brightgreen)](https://github.com/kommix/mongoose-activity)
+[![coverage](https://img.shields.io/badge/coverage-92.06%25-brightgreen)](https://github.com/kommix/mongoose-activity)
 [![license](https://img.shields.io/github/license/kommix/mongoose-activity)](LICENSE)
 
 > A **modern, production-ready** Mongoose plugin that takes care of activity logging so you don't have to.
