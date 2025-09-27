@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.2](https://github.com/kommix/mongoose-activity/compare/v1.2.1...v1.2.2) (2025-09-27)
+
+
+### Bug Fixes
+
+* Refactor magic strings to constants for improved readability in … ([ef6ffbd](https://github.com/kommix/mongoose-activity/commit/ef6ffbdc19d8813dddc436c053b3e6e35c6a6800))
+* Refactor magic strings to constants for improved readability in activity plugin ([a132602](https://github.com/kommix/mongoose-activity/commit/a132602a377dcf1a7ce69b079c8ee1c008fe4c86))
+
 ## [1.2.1](https://github.com/kommix/mongoose-activity/compare/v1.2.0...v1.2.1) (2025-09-27)
 
 
