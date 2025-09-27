@@ -5,6 +5,15 @@ import { activityContext } from './context';
 import { activityConfig } from './config';
 import { ActivityErrorHandler, MetaBuilder } from './utils';
 
+// Constants for document property names to avoid magic strings
+const INITIAL_STATE_PROP = '__initialState';
+const WAS_NEW_PROP = '__wasNew';
+const MODIFIED_TRACKED_FIELDS_PROP = '__modifiedTrackedFields';
+const ORIGINAL_VALUES_PROP = '__originalValues';
+const FILTER_PROP = '__filter';
+const UPDATE_PROP = '__update';
+const DELETION_DATA_PROP = '__deletionData';
+
 // Get the actual tracked fields that should be logged based on modified paths
 function getRelevantTrackedFields(
   modifiedPaths: string[],
@@ -91,13 +100,13 @@ export function activityPlugin<T extends Document>(
   );
 
   // Store original document state after loading from DB (only if tracking original values)
-  // MEMORY NOTE: __initialState stores a copy of all tracked field values
+  // MEMORY NOTE: INITIAL_STATE_PROP stores a copy of all tracked field values
   // Memory usage = trackedFields.length × average_field_size × documents_in_memory
   schema.post('init', function () {
     if (trackOriginalValues && trackedFields.length > 0) {
-      (this as any).__initialState = {};
+      (this as any)[INITIAL_STATE_PROP] = {};
       trackedFields.forEach((field) => {
-        (this as any).__initialState[field] = this.get(field);
+        (this as any)[INITIAL_STATE_PROP][field] = this.get(field);
       });
     }
   });
@@ -105,7 +114,7 @@ export function activityPlugin<T extends Document>(
   // Store original values for comparison and track if document is new
   schema.pre('save', function (next) {
     // Store whether this is a new document
-    (this as any).__wasNew = this.isNew;
+    (this as any)[WAS_NEW_PROP] = this.isNew;
 
     if (this.isNew) {
       next();
@@ -121,18 +130,18 @@ export function activityPlugin<T extends Document>(
       );
 
       if (modifiedTrackedFields.length > 0) {
-        (this as any).__modifiedTrackedFields = modifiedTrackedFields;
+        (this as any)[MODIFIED_TRACKED_FIELDS_PROP] = modifiedTrackedFields;
 
         if (trackOriginalValues) {
-          // MEMORY NOTE: __originalValues stores another copy for modified fields only
+          // MEMORY NOTE: ORIGINAL_VALUES_PROP stores another copy for modified fields only
           // This enables before/after change detection but doubles memory for changed fields
-          (this as any).__originalValues = {};
+          (this as any)[ORIGINAL_VALUES_PROP] = {};
 
           // Store the original values from initial state
           modifiedTrackedFields.forEach((field) => {
             // Use the value from when document was loaded from DB
-            const initialState = (this as any).__initialState || {};
-            (this as any).__originalValues[field] = initialState[field];
+            const initialState = (this as any)[INITIAL_STATE_PROP] || {};
+            (this as any)[ORIGINAL_VALUES_PROP][field] = initialState[field];
           });
         }
       }
@@ -144,12 +153,12 @@ export function activityPlugin<T extends Document>(
   // Log activity after successful save
   schema.post('save', async function (doc: T & { userId?: Types.ObjectId }) {
     try {
-      if ((doc as any).__wasNew) {
+      if ((doc as any)[WAS_NEW_PROP]) {
         // New document created - store initial state for future change tracking (only if enabled)
         if (trackOriginalValues && trackedFields.length > 0) {
-          (doc as any).__initialState = {};
+          (doc as any)[INITIAL_STATE_PROP] = {};
           trackedFields.forEach((field) => {
-            (doc as any).__initialState[field] = doc.get(field);
+            (doc as any)[INITIAL_STATE_PROP][field] = doc.get(field);
           });
         }
 
@@ -184,7 +193,7 @@ export function activityPlugin<T extends Document>(
         }
       } else {
         // Document updated
-        const modifiedFields = (doc as any).__modifiedTrackedFields;
+        const modifiedFields = (doc as any)[MODIFIED_TRACKED_FIELDS_PROP];
         if (modifiedFields && modifiedFields.length > 0 && doc.userId) {
           let meta;
 
@@ -194,7 +203,7 @@ export function activityPlugin<T extends Document>(
 
             modifiedFields.forEach((field: string) => {
               changes[field] = {
-                from: (doc as any).__originalValues?.[field],
+                from: (doc as any)[ORIGINAL_VALUES_PROP]?.[field],
                 to: doc.get(field),
               };
             });
@@ -243,16 +252,16 @@ export function activityPlugin<T extends Document>(
   // For per-document tracking on bulk operations, consider using individual updates
   schema.pre(['updateOne', 'updateMany', 'findOneAndUpdate'], function () {
     // Store the filter for later use in post hook
-    (this as any).__filter = this.getFilter();
-    (this as any).__update = this.getUpdate();
+    (this as any)[FILTER_PROP] = this.getFilter();
+    (this as any)[UPDATE_PROP] = this.getUpdate();
   });
 
   schema.post(
     ['updateOne', 'updateMany', 'findOneAndUpdate'],
     async function (_result: any) {
       try {
-        const filter = (this as any).__filter;
-        const update = (this as any).__update;
+        const filter = (this as any)[FILTER_PROP];
+        const update = (this as any)[UPDATE_PROP];
 
         // Only proceed if we have relevant updates and valid filter
         if (
@@ -342,7 +351,7 @@ export function activityPlugin<T extends Document>(
 
           if (docToDelete) {
             // Store the document data for the post hook
-            (this as any).__deletionData = {
+            (this as any)[DELETION_DATA_PROP] = {
               document: docToDelete,
               userId:
                 (docToDelete as any).userId ||
@@ -358,7 +367,7 @@ export function activityPlugin<T extends Document>(
 
     schema.post('deleteOne', async function (result: any) {
       try {
-        const deletionData = (this as any).__deletionData;
+        const deletionData = (this as any)[DELETION_DATA_PROP];
 
         if (deletionData && result.deletedCount > 0) {
           const { document: deletedDoc, userId } = deletionData;
@@ -416,7 +425,7 @@ export function activityPlugin<T extends Document>(
 
         if (docsToDelete.length > 0) {
           // Store the documents data for the post hook
-          (this as any).__deletionData = {
+          (this as any)[DELETION_DATA_PROP] = {
             documents: docsToDelete,
             filter: filter,
           };
@@ -428,7 +437,7 @@ export function activityPlugin<T extends Document>(
 
     schema.post('deleteMany', async function (result: any) {
       try {
-        const deletionData = (this as any).__deletionData;
+        const deletionData = (this as any)[DELETION_DATA_PROP];
 
         if (deletionData && result.deletedCount > 0) {
           const { documents: deletedDocs, filter } = deletionData;
@@ -554,7 +563,7 @@ export function activityPlugin<T extends Document>(
 
           if (docToDelete) {
             // Store the document data for the post hook
-            (this as any).__deletionData = {
+            (this as any)[DELETION_DATA_PROP] = {
               document: docToDelete,
               userId:
                 (docToDelete as any).userId ||
@@ -570,7 +579,7 @@ export function activityPlugin<T extends Document>(
 
     schema.post('findOneAndDelete', async function (deletedDoc: any) {
       try {
-        const deletionData = (this as any).__deletionData;
+        const deletionData = (this as any)[DELETION_DATA_PROP];
 
         if (deletionData && deletedDoc) {
           const { userId } = deletionData;
