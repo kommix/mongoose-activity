@@ -1,4 +1,4 @@
-<img src="./assets/kommix-logo.svg" alt="Kommix Logo" width="200" />
+<img src="./assets/kommix-logo.jpg" alt="Kommix Logo" width="100%" />
 
 # @kommix/mongoose-activity
 
@@ -25,6 +25,7 @@
 - 🎯 **[Advanced Examples](./docs/EXAMPLES.md)** - Complex use cases and patterns
 - 📊 **[Benchmarks & Performance](./docs/BENCHMARKS.md)** - Performance metrics and optimization tips
 - 🗺️ **[Roadmap](./docs/ROADMAP.md)** - Future features and improvements
+- 💡 **[Sample Examples](./examples/)** - 7 runnable examples covering all features
 
 ## 🚀 Installation
 
