@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.1](https://github.com/kommix/mongoose-activity/compare/v1.2.0...v1.2.1) (2025-09-27)
+
+
+### Bug Fixes
+
+* Enhance documentation and performance testing for mongoose-activ… ([bb3180f](https://github.com/kommix/mongoose-activity/commit/bb3180f3ef75dfca8aac5321e63763e15053e073))
+* Enhance documentation and performance testing for mongoose-activity library ([a16fc31](https://github.com/kommix/mongoose-activity/commit/a16fc31475ec6b6aec2ccbc948c795fd7e1bf9c5))
+* Improve code formatting and consistency in performance and stress test scripts ([88ab9f4](https://github.com/kommix/mongoose-activity/commit/88ab9f4c9cf80442f50e87d924cce86770f61f69))
+
 ## [1.2.0](https://github.com/kommix/mongoose-activity/compare/v1.1.0...v1.2.0) (2025-09-27)
 
 
