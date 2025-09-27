@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.0](https://github.com/kommix/mongoose-activity/compare/v1.1.0...v1.2.0) (2025-09-27)
+
+
+### Features
+
+* Add runnable examples and fix package configuration ([5767f3a](https://github.com/kommix/mongoose-activity/commit/5767f3a39d12ea77484c2271b1faf1276e2b1fef))
+* Add runnable examples and fix package configuration ([448e32d](https://github.com/kommix/mongoose-activity/commit/448e32d8944e6b7784be7671e9860a168613a23b))
+
 ## [1.1.0](https://github.com/kommix/mongoose-activity/compare/v1.0.3...v1.1.0) (2025-09-26)
 
 
