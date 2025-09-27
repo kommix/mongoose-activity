@@ -1,5 +1,16 @@
 # Advanced Examples
 
+## Table of Contents
+
+- [High-Performance Async Logging](#high-performance-async-logging)
+- [Complex Event-Driven Workflows](#complex-event-driven-workflows)
+- [Transaction-Safe Logging](#transaction-safe-logging)
+- [Rich Activity Feeds with Context](#rich-activity-feeds-with-context)
+- [Custom Activity Types with Validation](#custom-activity-types-with-validation)
+- [Scheduled Cleanup Jobs](#scheduled-cleanup-jobs)
+- [Performance Optimizations](#performance-optimizations)
+- [Memory Safety & Best Practices](#memory-safety--best-practices)
+
 ## High-Performance Async Logging
 
 ```typescript
@@ -11,6 +22,7 @@ activityConfig.configure({
 });
 
 // All subsequent activities use async logging
+// Returns: Promise<void> - Activity is logged asynchronously
 await logActivity({
   userId: userId,
   entity: { type: 'click', id: elementId },
@@ -26,6 +38,7 @@ await logActivity({
 activityEvents.on('activity:logged', async (activity) => {
   if (activity.type === 'user_registered') {
     // Trigger welcome email activity
+    // Returns: Promise<void>
     await logActivity({
       userId: activity.userId,
       entity: { type: 'email', id: new mongoose.Types.ObjectId() },
@@ -35,6 +48,20 @@ activityEvents.on('activity:logged', async (activity) => {
         emailTemplate: 'welcome-v2'
       }
     });
+  }
+});
+
+// Cancel activities before logging with before-log event
+// Return false to prevent the activity from being logged
+activityEvents.on('activity:before-log', (activity) => {
+  // Skip noisy debug events
+  if (activity.type === 'debug_event') {
+    return false; // Activity will not be logged
+  }
+
+  // Skip activities from test users
+  if (activity.meta?.testUser === true) {
+    return false;
   }
 });
 ```
@@ -50,6 +77,7 @@ await session.withTransaction(async () => {
   await order.save({ session });
 
   // Log activity in same transaction
+  // Returns: Promise<void> when transaction completes
   await logActivity({
     userId,
     entity: { type: 'order', id: order._id },
@@ -68,11 +96,13 @@ await session.withTransaction(async () => {
 app.use(activityContextMiddleware({
   extractUserId: (req) => req.user?.id,
   extractRequestId: (req) => req.headers['x-request-id'],
+  extractSessionId: (req) => req.session?.id,
   extractIp: (req) => req.ip,
   extractUserAgent: (req) => req.headers['user-agent']
 }));
 
 // Activities automatically include context
+// Returns: Promise<IActivity[]>
 const feed = await getActivityFeed(userId);
 console.log(feed[0]);
 // {
@@ -82,6 +112,7 @@ console.log(feed[0]);
 //   meta: {
 //     changes: { name: { from: 'Old', to: 'New' } },
 //     requestId: 'req-123',
+//     sessionId: 'sess-abc-456',
 //     ip: '192.168.1.1',
 //     userAgent: 'Mozilla/5.0...'
 //   },
@@ -99,6 +130,7 @@ userSchema.plugin(activityPlugin, {
 });
 
 // Custom activity with rich metadata
+// Returns: Promise<void>
 await logActivity({
   userId: userId,
   entity: { type: 'experiment', id: experimentId },
@@ -116,7 +148,10 @@ await logActivity({
 ## Scheduled Cleanup Jobs
 
 ```typescript
-// Set up automated cleanup (e.g., with cron)
+// Set up automated cleanup with node-cron or similar scheduler
+// npm install node-cron
+import * as cron from 'node-cron';
+
 async function cleanupOldActivities() {
   const result = await Activity.prune({
     olderThan: '90d',
@@ -236,7 +271,11 @@ User.schema.post('save', function() {
   if (process.env.NODE_ENV === 'development') {
     const hasInitialState = '__initialState' in this;
     const hasOriginalValues = '__originalValues' in this;
+
+    // Also monitor process memory usage
+    const memUsage = process.memoryUsage();
     console.log(`Document memory: initialState=${hasInitialState}, originalValues=${hasOriginalValues}`);
+    console.log(`Process memory: heap=${Math.round(memUsage.heapUsed / 1024 / 1024)}MB, RSS=${Math.round(memUsage.rss / 1024 / 1024)}MB`);
   }
 });
 ```
