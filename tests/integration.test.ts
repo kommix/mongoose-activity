@@ -602,9 +602,9 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
         errorEvents.push({ error, activity });
       });
 
-      // Test missing userId with context warning (provide dummy userId for TypeScript)
+      // Test missing userId with context warning (no context running)
       await logActivity({
-        userId: new mongoose.Types.ObjectId(), // Will be ignored, context provides userId
+        userId: undefined as any, // Actually test missing userId
         entity: { type: 'test', id: new mongoose.Types.ObjectId() },
         type: 'no_user_test',
       });
@@ -625,10 +625,10 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
         type: 'validation_error_test',
       });
 
-      expect(errorEvents).toHaveLength(1); // Only the validation error
+      expect(errorEvents).toHaveLength(2); // Missing userId error and validation error
 
       const activities = await Activity.find({});
-      expect(activities).toHaveLength(2); // no_user_test and context_user_test succeeded
+      expect(activities).toHaveLength(1); // Only context_user_test succeeded (missing userId and validation error failed)
 
       const contextActivity = activities.find(
         (a) => a.type === 'context_user_test'

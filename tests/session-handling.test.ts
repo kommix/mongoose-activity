@@ -90,10 +90,10 @@ describe('Session Handling', () => {
           })
         );
 
-        // Verify session was passed (check for session property existence)
+        // Verify session was passed (check for exact session object)
         const callArgs = logActivitySpy.mock.calls[0];
         expect(callArgs[1]).toHaveProperty('session');
-        expect(callArgs[1].session).toBeTruthy();
+        expect(callArgs[1].session).toBe(session); // Verify exact session object
       } finally {
         await session.endSession();
       }
@@ -134,7 +134,7 @@ describe('Session Handling', () => {
         // Verify session was passed
         const callArgs = logActivitySpy.mock.calls[0];
         expect(callArgs[1]).toHaveProperty('session');
-        expect(callArgs[1].session).toBeTruthy();
+        expect(callArgs[1].session).toBe(session); // Verify exact session object
       } finally {
         await session.endSession();
       }
@@ -179,7 +179,7 @@ describe('Session Handling', () => {
         // Verify session was passed
         const callArgs = logActivitySpy.mock.calls[0];
         expect(callArgs[1]).toHaveProperty('session');
-        expect(callArgs[1].session).toBeTruthy();
+        expect(callArgs[1].session).toBe(session); // Verify exact session object
       } finally {
         await session.endSession();
       }
@@ -218,7 +218,7 @@ describe('Session Handling', () => {
         // Verify session was passed
         const callArgs = logActivitySpy.mock.calls[0];
         expect(callArgs[1]).toHaveProperty('session');
-        expect(callArgs[1].session).toBeTruthy();
+        expect(callArgs[1].session).toBe(session); // Verify exact session object
       } finally {
         await session.endSession();
       }
@@ -257,7 +257,7 @@ describe('Session Handling', () => {
         // Verify session was passed
         const callArgs = logActivitySpy.mock.calls[0];
         expect(callArgs[1]).toHaveProperty('session');
-        expect(callArgs[1].session).toBeTruthy();
+        expect(callArgs[1].session).toBe(session); // Verify exact session object
       } finally {
         await session.endSession();
       }
