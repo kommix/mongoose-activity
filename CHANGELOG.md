@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.3](https://github.com/kommix/mongoose-activity/compare/v1.2.2...v1.2.3) (2025-09-28)
+
+
+### Bug Fixes
+
+* Enhance middleware with TypeScript support and robust error hand… ([5b6b546](https://github.com/kommix/mongoose-activity/commit/5b6b54660d8d5c4a261b14ea441395e54408041a))
+* Enhance middleware with TypeScript support and robust error handling ([d1e1b79](https://github.com/kommix/mongoose-activity/commit/d1e1b79a4aaf3e4f0011da319aaefb6c831d8511))
+
 ## [1.2.2](https://github.com/kommix/mongoose-activity/compare/v1.2.1...v1.2.2) (2025-09-27)
 
 
