@@ -6,10 +6,7 @@
 
 [![npm version](https://img.shields.io/npm/v/@kommix/mongoose-activity)](https://www.npmjs.com/package/@kommix/mongoose-activity)
 [![npm downloads](https://img.shields.io/npm/dm/@kommix/mongoose-activity)](https://www.npmjs.com/package/@kommix/mongoose-activity)
-[![maintenance](https://img.shields.io/maintenance/yes/2025)](https://github.com/kommix/mongoose-activity)
-[![GitHub release](https://img.shields.io/github/v/release/kommix/mongoose-activity)](https://github.com/kommix/mongoose-activity/releases)
-[![build](https://img.shields.io/github/actions/workflow/status/kommix/mongoose-activity/ci.yml)](https://github.com/kommix/mongoose-activity/actions)
-[![coverage](https://img.shields.io/badge/coverage-92.06%25-brightgreen)](https://github.com/kommix/mongoose-activity)
+[![coverage](https://img.shields.io/badge/coverage-93.16%25-brightgreen)](https://github.com/kommix/mongoose-activity)
 [![license](https://img.shields.io/github/license/kommix/mongoose-activity)](LICENSE)
 
 > A **modern, production-ready** Mongoose plugin that takes care of activity logging so you don't have to.
@@ -165,13 +162,43 @@ const orderHistory = await getEntityActivity('order', orderId);
 ```typescript
 import { activityContextMiddleware } from '@kommix/mongoose-activity';
 
-// Express
+// Basic usage (works with any framework)
 app.use(activityContextMiddleware({
   extractUserId: (req) => req.user?.id,
-  extractRequestId: (req) => req.headers['x-request-id']
+  extractRequestId: (req) => req.headers?.['x-request-id']
 }));
 
 // Now all activities automatically include request context — magic! ✨
+```
+
+#### 🎯 Enhanced TypeScript Support
+
+```typescript
+import { Request, Response } from 'express';
+import { Context } from 'koa';
+
+// Express with full type safety and IntelliSense
+app.use(activityContextMiddleware<Request, Response>({
+  extractUserId: (req) => req.user?.id,  // Full autocomplete
+  extractRequestId: (req) => req.headers['x-request-id'],
+}));
+
+// Koa with type safety
+app.use(koaActivityContextMiddleware<Context>({
+  extractUserId: (ctx) => ctx.state.user?.id,
+  extractIp: (ctx) => ctx.ip,
+}));
+
+// Custom framework integration
+interface MyCustomRequest {
+  authenticatedUser: { userId: string };
+  customHeaders: Record<string, string>;
+}
+
+app.use(activityContextMiddleware<MyCustomRequest>({
+  extractUserId: (req) => req.authenticatedUser.userId,
+  extractRequestId: (req) => req.customHeaders.requestId,
+}));
 ```
 
 ## ✨ Key Features
@@ -213,7 +240,8 @@ activityConfig.configure({
 - **Node.js**: 18+ (matches engines field in package.json)
 - **MongoDB**: 4.0+ (for TTL and indexes)
 - **Mongoose**: 6.0+ or 7.0+ or 8.0+
-- **TypeScript**: 4.0+ (full type support)
+- **TypeScript**: 4.0+ (full type support with enhanced middleware IntelliSense)
+- **Frameworks**: Express, Koa, or any compatible middleware framework
 
 ## 🧪 Development
 

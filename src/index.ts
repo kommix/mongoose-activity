@@ -21,6 +21,7 @@ export {
   activityContextMiddleware,
   koaActivityContextMiddleware,
   MiddlewareOptions,
+  UserId,
 } from './middleware';
 export {
   ActivityErrorHandler,

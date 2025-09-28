@@ -6,3 +6,8 @@ export {
   UpdateMetadata,
   DeleteMetadata,
 } from './meta-builder';
+export {
+  safeExtract,
+  buildContext,
+  ExtractorConfig,
+} from './middleware-helpers';

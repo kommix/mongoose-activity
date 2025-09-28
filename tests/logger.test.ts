@@ -217,8 +217,10 @@ describe('Activity Logger', () => {
         meta: { title: 'Async Post' },
       });
 
-      // Wait for async save to complete
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Wait for async save to complete via event
+      await new Promise((resolve) => {
+        activityEvents.once('activity:logged', resolve);
+      });
 
       // Activity should be saved
       const activities = await Activity.find({});
@@ -242,8 +244,10 @@ describe('Activity Logger', () => {
         type: 'post_created',
       });
 
-      // Wait for async error handling
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Wait for async error handling via event
+      await new Promise((resolve) => {
+        activityEvents.once('activity:error', resolve);
+      });
 
       expect(errorHandler).toHaveBeenCalledWith(
         expect.any(Error),

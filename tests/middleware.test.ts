@@ -8,6 +8,12 @@ describe('Activity Middleware', () => {
   beforeEach(() => {
     // Clear context before each test
     activityContext.clear();
+    // Clear console warnings
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   describe('Express Middleware', () => {
@@ -158,9 +164,166 @@ describe('Activity Middleware', () => {
         activityContext.run = originalRun;
       }
     });
+
+    it('should handle x-forwarded-for with spaces and empty values', () => {
+      const middleware = activityContextMiddleware();
+
+      const req = {
+        headers: {
+          'x-forwarded-for': '  , , 10.0.0.2  ,  , 192.168.1.200',
+        },
+      };
+
+      const res = { on: jest.fn() };
+      const next = jest.fn();
+
+      let capturedContext: any;
+      const originalRun = activityContext.run;
+      activityContext.run = jest.fn((context, callback) => {
+        capturedContext = context;
+        return callback();
+      });
+
+      try {
+        middleware(req, res, next);
+        expect(capturedContext.ip).toBe('10.0.0.2'); // Should get first non-empty IP
+      } finally {
+        activityContext.run = originalRun;
+      }
+    });
+
+    it('should handle extractor function errors gracefully', () => {
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'development'; // Enable console warnings
+
+      const errorExtractor = () => {
+        throw new Error('Extractor failed');
+      };
+
+      const middleware = activityContextMiddleware({
+        extractUserId: errorExtractor,
+        extractRequestId: errorExtractor,
+        extractIp: errorExtractor,
+        extractSessionId: errorExtractor,
+        extractUserAgent: errorExtractor,
+      });
+
+      const req = { headers: {} };
+      const res = { on: jest.fn() };
+      const next = jest.fn();
+
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+
+      expect(() => middleware(req, res, next)).not.toThrow();
+      expect(next).toHaveBeenCalled();
+      expect(consoleWarnSpy).toHaveBeenCalledTimes(5); // One for each extractor
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        '[mongoose-activity] Failed to extract userId:',
+        expect.any(Error)
+      );
+
+      process.env.NODE_ENV = originalEnv; // Restore original env
+    });
+
+    it('should handle event binding failures gracefully', () => {
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'development'; // Enable console warnings
+
+      const middleware = activityContextMiddleware();
+      const req = {};
+      const res = {
+        on: jest.fn(() => {
+          throw new Error('Event binding failed');
+        }),
+      };
+      const next = jest.fn();
+
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+
+      expect(() => middleware(req, res, next)).not.toThrow();
+      expect(next).toHaveBeenCalled();
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        '[mongoose-activity] Failed to bind cleanup events:',
+        expect.any(Error)
+      );
+
+      process.env.NODE_ENV = originalEnv; // Restore original env
+    });
+
+    it('should handle missing response methods gracefully', () => {
+      const middleware = activityContextMiddleware();
+      const req = {};
+      const res = {}; // No 'on' method
+      const next = jest.fn();
+
+      expect(() => middleware(req, res, next)).not.toThrow();
+      expect(next).toHaveBeenCalled();
+    });
   });
 
   describe('Koa Middleware', () => {
+    it('should handle x-forwarded-for in Koa context', async () => {
+      const middleware = koaActivityContextMiddleware();
+
+      const ctx = {
+        request: {
+          header: {
+            'x-forwarded-for': '10.0.0.1, 192.168.1.100',
+          },
+        },
+      };
+
+      const next = jest.fn().mockResolvedValue(undefined);
+
+      let capturedContext: any;
+      const originalRun = activityContext.run;
+      activityContext.run = jest.fn((context, callback) => {
+        capturedContext = context;
+        return callback();
+      });
+
+      try {
+        await middleware(ctx, next);
+        expect(capturedContext.ip).toBe('10.0.0.1'); // Should get first IP
+      } finally {
+        activityContext.run = originalRun;
+      }
+    });
+
+    it('should handle extractor errors in Koa middleware', async () => {
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'development'; // Enable console warnings
+
+      const errorExtractor = () => {
+        throw new Error('Koa extractor failed');
+      };
+
+      const middleware = koaActivityContextMiddleware({
+        extractUserId: errorExtractor,
+        extractRequestId: errorExtractor,
+        extractIp: errorExtractor,
+        extractSessionId: errorExtractor,
+        extractUserAgent: errorExtractor,
+      });
+
+      const ctx = {
+        request: { header: {} },
+      };
+
+      const next = jest.fn().mockResolvedValue(undefined);
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+
+      await expect(middleware(ctx, next)).resolves.not.toThrow();
+      expect(next).toHaveBeenCalled();
+      expect(consoleWarnSpy).toHaveBeenCalledTimes(5);
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        '[mongoose-activity] Failed to extract userId:',
+        expect.any(Error)
+      );
+
+      process.env.NODE_ENV = originalEnv; // Restore original env
+    });
+
     it('should extract context from Koa context with default extractors', async () => {
       const middleware = koaActivityContextMiddleware();
 
