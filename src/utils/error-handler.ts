@@ -19,7 +19,13 @@ export class ActivityErrorHandler {
 
     // Emit error event for programmatic handling
     const errorObj =
-      error instanceof Error ? error : new Error(String(error || message));
+      error instanceof Error
+        ? error
+        : new Error(
+            typeof error === 'string' || typeof error === 'number'
+              ? String(error)
+              : message
+          );
     activityEvents.emit('activity:error', errorObj, context);
   }
 
