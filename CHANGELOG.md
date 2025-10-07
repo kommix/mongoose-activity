@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.4](https://github.com/kommix/mongoose-activity/compare/v1.2.3...v1.2.4) (2025-10-07)
+
+
+### Bug Fixes
+
+* increase timeouts in integration tests to handle async operations ([e73b863](https://github.com/kommix/mongoose-activity/commit/e73b86308bdc383a64ea828f454c9bdbe63c4a09))
+
 ## [1.2.3](https://github.com/kommix/mongoose-activity/compare/v1.2.2...v1.2.3) (2025-09-28)
 
 
