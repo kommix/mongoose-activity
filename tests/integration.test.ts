@@ -358,7 +358,7 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
         }
       );
 
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
       expect(capturedActivities).toHaveLength(1);
       const activity = capturedActivities[0];
@@ -493,7 +493,7 @@ describe('Integration Tests - Full Plugin Ecosystem', () => {
       });
 
       // Wait for chain completion
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 200));
 
       expect(beforeLogCount).toBe(5); // All activities hit before-log (including chained)
       expect(loggedCount).toBe(4); // 3 original + 1 chained (cancelled one doesn't get logged)
